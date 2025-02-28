@@ -20,6 +20,7 @@
 .input-line {
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 .prompt {
@@ -32,10 +33,34 @@
   background: transparent;
   border: none;
   outline: none;
-  color: #0f0;
-  font-family: 'Courier New', monospace;
+  color: inherit;
+  font-family: inherit;
   font-size: 1rem;
-  caret-color: #0f0;
+}
+
+/* Custom terminal caret */
+.terminal-caret {
+  position: absolute;
+  display: inline-block;
+  height: 16px;
+  width: 8px;
+  background-color: currentColor;
+  animation: blink 1s step-end infinite;
+  pointer-events: none;
+  left: 0;
+  transform: translateX(0);
+}
+
+/* Position the caret after the prompt */
+.input-line {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 .crt::before {
@@ -51,4 +76,8 @@
   background-size: 100% 2px, 3px 100%;
   pointer-events: none;
   z-index: 2;
+}
+
+.command-history {
+  opacity: 0.4;
 }

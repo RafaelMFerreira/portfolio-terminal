@@ -8,6 +8,13 @@ export interface TerminalCommand {
   action: (args: string[]) => string;
 }
 
+export interface TerminalTheme {
+  name: string;
+  background: string;
+  foreground: string;
+  fontFamily: string;
+}
+
 @Component({
   selector: 'app-terminal',
   standalone: true,
@@ -22,13 +29,25 @@ export class TerminalComponent implements OnInit {
   @Input() commands: TerminalCommand[] = [];
 
   @Output() commandExecuted = new EventEmitter<{command: string, output: string}>();
+  @Output() themeChanged = new EventEmitter<TerminalTheme>();
 
   @ViewChild('terminalOutput', { static: true }) terminalOutput!: ElementRef;
   @ViewChild('commandInput', { static: true }) commandInput!: ElementRef;
+  @ViewChild('terminalContainer', { static: true }) terminalContainer!: ElementRef;
 
   currentCommand = '';
   commandHistory: string[] = [];
   historyIndex = -1;
+
+  themes: TerminalTheme[] = [
+    { name: 'matrix', background: '#000', foreground: '#0f0', fontFamily: 'Courier New, monospace' },
+    { name: 'classic', background: '#000', foreground: '#fff', fontFamily: 'Courier New, monospace' },
+    { name: 'amber', background: '#000', foreground: '#ffb000', fontFamily: 'Courier New, monospace' },
+    { name: 'blue', background: '#000', foreground: '#00bfff', fontFamily: 'Courier New, monospace' },
+    { name: 'ubuntu', background: '#300a24', foreground: '#fff', fontFamily: 'Ubuntu Mono, monospace' }
+  ];
+
+  currentTheme: TerminalTheme = this.themes[0];
 
   constructor() {}
 
@@ -36,7 +55,70 @@ export class TerminalComponent implements OnInit {
     if (this.initialMessage) {
       this.addOutput(this.initialMessage);
     }
-    setTimeout(() => this.commandInput.nativeElement.focus(), 100);
+
+    // Add theme command
+    this.commands.push({
+      name: 'theme',
+      description: 'Change terminal theme. Usage: theme [name] or theme list',
+      action: (args) => this.handleThemeCommand(args)
+    });
+
+    // Apply initial theme
+    this.applyTheme(this.currentTheme);
+
+    this.commandInput.nativeElement.addEventListener('focus', () => {
+      this.updateCaretPosition();
+    });
+
+    this.commandInput.nativeElement.addEventListener('click', () => {
+      this.updateCaretPosition();
+    });
+
+    this.commandInput.nativeElement.addEventListener('mouseup', () => {
+      this.updateCaretPosition();
+    });
+
+    // Initial update
+    setTimeout(() => this.updateCaretPosition(), 100);
+  }
+
+  updateCaretPosition(): void {
+    const input = this.commandInput.nativeElement;
+    const caretElement = this.terminalContainer.nativeElement.querySelector('.terminal-caret');
+    if (!caretElement) return;
+
+    // Get input metrics
+    const inputStyles = window.getComputedStyle(input);
+    const fontFamily = inputStyles.fontFamily;
+    const fontSize = inputStyles.fontSize;
+
+    // Create a measuring element with the same styling
+    const measure = document.createElement('span');
+    measure.style.fontFamily = fontFamily;
+    measure.style.fontSize = fontSize;
+    measure.style.visibility = 'hidden';
+    measure.style.position = 'absolute';
+    measure.style.whiteSpace = 'pre';
+
+    // Add to DOM to measure
+    document.body.appendChild(measure);
+
+    // Measure text up to cursor position
+    const cursorPos = input.selectionStart || 0;
+    const textBeforeCursor = input.value.substring(0, cursorPos);
+    measure.textContent = textBeforeCursor;
+
+    // Calculate position
+    const textWidth = measure.offsetWidth;
+
+    // Clean up
+    document.body.removeChild(measure);
+
+    // Position caret
+    const promptElement = this.terminalContainer.nativeElement.querySelector('.prompt');
+    const promptWidth = promptElement.offsetWidth;
+
+    caretElement.style.left = `${promptWidth + textWidth + 8}px`;
   }
 
   handleKeyDown(event: KeyboardEvent): void {
@@ -49,6 +131,7 @@ export class TerminalComponent implements OnInit {
       event.preventDefault();
       this.navigateHistory(1);
     }
+    setTimeout(() => this.updateCaretPosition(), 10);
   }
 
   executeCommand(): void {
@@ -128,5 +211,36 @@ export class TerminalComponent implements OnInit {
     });
 
     return helpText;
+  }
+
+  handleThemeCommand(args: string[]): string {
+    if (!args.length || args[0] === 'list') {
+      return 'Available themes:\n' + this.themes.map(t => `- ${t.name}`).join('\n');
+    }
+
+    const themeName = args[0];
+    const theme = this.themes.find(t => t.name === themeName);
+
+    if (theme) {
+      this.currentTheme = theme;
+      this.applyTheme(theme);
+      this.themeChanged.emit(theme);
+      return `Theme changed to ${theme.name}`;
+    }
+
+    return `Theme "${themeName}" not found. Use "theme list" to see available themes.`;
+  }
+
+  applyTheme(theme: TerminalTheme): void {
+    const container = this.terminalContainer.nativeElement;
+    const input = this.commandInput.nativeElement;
+
+    container.style.backgroundColor = theme.background;
+    container.style.color = theme.foreground;
+    container.style.fontFamily = theme.fontFamily;
+
+    input.style.color = theme.foreground;
+    input.style.fontFamily = theme.fontFamily;
+    input.style.caretColor = 'transparent';
   }
 }
