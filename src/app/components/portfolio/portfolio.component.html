@@ -1,0 +1,17 @@
+<div class="portfolio-container" [ngClass]="{'shutdown': isShutdown, 'crt': true}">
+  <div *ngIf="showIntro" class="name-container" [style.opacity]="nameOpacity">
+    <div class="glitch" [attr.data-text]="nameText">{{nameText}}</div>
+  </div>
+
+  <div *ngIf="showBootScreen" class="boot-screen">
+    <div class="boot-log">{{bootLog}}</div>
+  </div>
+
+  <app-terminal
+    *ngIf="showTerminal"
+    [commands]="terminalCommands"
+    [prompt]="terminalPrompt"
+    [initialMessage]="terminalInitialMessage"
+    (commandExecuted)="onCommandExecuted($event)">
+  </app-terminal>
+</div>

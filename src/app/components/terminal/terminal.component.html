@@ -1,0 +1,13 @@
+<div class="terminal-container" [ngClass]="{'crt': enableCrtEffect}">
+  <div #terminalOutput class="terminal-output"></div>
+  <div class="input-line">
+    <span class="prompt">{{prompt}}</span>
+    <input
+      #commandInput
+      type="text"
+      [(ngModel)]="currentCommand"
+      (keydown)="handleKeyDown($event)"
+      class="command-input"
+      autofocus>
+  </div>
+</div>
