@@ -163,7 +163,6 @@ export class TerminalComponent implements OnInit {
   }
 
   handleKeyDown(event: KeyboardEvent): void {
-    // Handle escape key to close visual response or image modal
     if (event.key === 'Escape') {
       if (this.imageModal.visible) {
         this.closeImageModal();
@@ -324,7 +323,6 @@ export class TerminalComponent implements OnInit {
       document.documentElement.style.setProperty('--terminal-accent-transparent', transparentAccent);
       document.documentElement.style.setProperty('--terminal-border-light', borderLight);
       
-      // Apply theme to visual elements if they exist
       if (this.currentVisualResponse) {
         this.applyThemeToVisualElements();
       }
@@ -346,10 +344,9 @@ export class TerminalComponent implements OnInit {
     container.style.fontFamily = theme.fontFamily;
 
     // Apply theme to input
-    console.log(input)
     input.style.color = theme.foreground;
     input.style.fontFamily = theme.fontFamily;
-    input.style.caretColor = 'transparent'; //TODO: Figure out why the default caret is still showing up
+    input.style.caretColor = 'transparent';
     
     // Apply theme to visual response areas
     const visualResponseAreas = container.querySelectorAll('.visual-response-area, .project-card, .skills-display, .about-section, .contact-form');
@@ -494,15 +491,12 @@ export class TerminalComponent implements OnInit {
       header.style.color = this.currentTheme.foreground;
     });
     
-    // No need to style active indicators here as they're now styled inline
-    
     // Apply theme to navigation tip
     const navigationTips = container.querySelectorAll('.navigation-tip kbd');
     navigationTips.forEach((tip: HTMLElement) => {
       tip.style.borderColor = this.currentTheme.foreground;
     });
 
-    // Apply theme to modal if visible
     if (this.imageModal.visible) {
       this.applyThemeToModal();
     }
@@ -568,21 +562,6 @@ export class TerminalComponent implements OnInit {
     }
   }
   
-  // Helper method to refresh the card animation
-  private refreshExperienceCardAnimation(): void {
-    const container = this.terminalContainer.nativeElement;
-    const cards = container.querySelectorAll('.experience-card');
-    
-    // Remove and reapply animation to trigger it again
-    cards.forEach((card: HTMLElement) => {
-      card.style.animation = 'none';
-      // Force reflow
-      void card.offsetWidth;
-      card.style.animation = 'fadeIn 0.4s ease';
-    });
-  }
-  
-  // New method to refresh animations for all visual response types
   private refreshVisualResponseAnimations(): void {
     if (!this.currentVisualResponse) return;
     
@@ -621,18 +600,16 @@ export class TerminalComponent implements OnInit {
     });
   }
 
-  // Open image modal
   openImageModal(src: string, title: string): void {
     this.imageModal = {
       visible: true,
       src,
       title
     };
-    // Apply theme to modal
+    
     this.applyThemeToModal();
   }
 
-  // Close image modal
   closeImageModal(): void {
     this.imageModal.visible = false;
   }
