@@ -8,7 +8,15 @@
         <div class="project-grid">
           <div *ngFor="let project of currentVisualResponse.data; let i = index" class="project-item" [attr.data-index]="i">
             <div class="card">
-              <img [src]="project.imageUrl" [alt]="project.title">
+              <div class="image-container" *ngIf="project.imageUrl" (click)="openImageModal(project.imageUrl, project.title)">
+                <img [src]="project.imageUrl" [alt]="project.title">
+                <div class="image-overlay">
+                  <span class="zoom-icon">🔍</span>
+                </div>
+              </div>
+              <div *ngIf="!project.imageUrl" class="no-image">
+                <span class="no-image-text">No image available</span>
+              </div>
               <div class="card-content">
                 <h3>{{project.title}}</h3>
                 <p>{{project.description}}</p>
@@ -143,5 +151,14 @@
             class="suggestion-btn">
       {{cmd}}
     </button>
+  </div>
+
+  <!-- Image Modal -->
+  <div *ngIf="imageModal.visible" class="image-modal" (click)="closeImageModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <button class="modal-close" (click)="closeImageModal()">×</button>
+      <h3 class="modal-title">{{imageModal.title}}</h3>
+      <img [src]="imageModal.src" [alt]="imageModal.title" class="modal-image">
+    </div>
   </div>
 </div>

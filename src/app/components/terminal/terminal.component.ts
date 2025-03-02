@@ -56,6 +56,13 @@ export class TerminalComponent implements OnInit {
   currentVisualResponse: VisualResponse | null = null;
   suggestionButtons: string[] = ['projects', 'skills', 'about', 'experience', 'contact'];
   currentExperienceIndex = 0;
+  
+  // Image modal properties
+  imageModal = {
+    visible: false,
+    src: '',
+    title: ''
+  };
 
   themes: TerminalTheme[] = [
     { name: 'matrix', background: '#000', foreground: '#0f0', fontFamily: 'Courier New, monospace' },
@@ -156,6 +163,20 @@ export class TerminalComponent implements OnInit {
   }
 
   handleKeyDown(event: KeyboardEvent): void {
+    // Handle escape key to close visual response or image modal
+    if (event.key === 'Escape') {
+      if (this.imageModal.visible) {
+        this.closeImageModal();
+        event.preventDefault();
+        return;
+      }
+      if (this.currentVisualResponse) {
+        this.currentVisualResponse = null;
+        event.preventDefault();
+        return;
+      }
+    }
+    
     if (event.key === 'Enter') {
       this.executeCommand();
     } else if (event.key === 'ArrowUp') {
@@ -168,8 +189,6 @@ export class TerminalComponent implements OnInit {
       this.navigateExperience(-1);
     } else if (event.key === 'ArrowRight' && this.currentVisualResponse?.type === 'experience') {
       this.navigateExperience(1);
-    } else if (event.key === 'Escape' && this.currentVisualResponse) {
-      this.currentVisualResponse = null;
     }
     setTimeout(() => this.updateCaretPosition(), 10);
   }
@@ -366,6 +385,11 @@ export class TerminalComponent implements OnInit {
     const borderLight = this.createTransparentColor(theme.foreground, 0.3);
     document.documentElement.style.setProperty('--terminal-accent-transparent', transparentAccent);
     document.documentElement.style.setProperty('--terminal-border-light', borderLight);
+
+    // Apply theme to modal if visible
+    if (this.imageModal.visible) {
+      this.applyThemeToModal();
+    }
   }
   
   // Helper function to adjust color brightness
@@ -476,6 +500,11 @@ export class TerminalComponent implements OnInit {
     navigationTips.forEach((tip: HTMLElement) => {
       tip.style.borderColor = this.currentTheme.foreground;
     });
+
+    // Apply theme to modal if visible
+    if (this.imageModal.visible) {
+      this.applyThemeToModal();
+    }
   }
 
   // Helper method to create transparent colors
@@ -589,5 +618,46 @@ export class TerminalComponent implements OnInit {
       // Restore original animation or use fadeIn as fallback
       element.style.animation = originalAnimation || 'fadeIn 0.4s ease';
     });
+  }
+
+  // Open image modal
+  openImageModal(src: string, title: string): void {
+    this.imageModal = {
+      visible: true,
+      src,
+      title
+    };
+    // Apply theme to modal
+    this.applyThemeToModal();
+  }
+
+  // Close image modal
+  closeImageModal(): void {
+    this.imageModal.visible = false;
+  }
+
+  // Apply theme to modal
+  private applyThemeToModal(): void {
+    if (!this.imageModal.visible) return;
+    
+    const modal = document.querySelector('.image-modal');
+    if (!modal) return;
+    
+    const modalContent = modal.querySelector('.modal-content');
+    const modalTitle = modal.querySelector('.modal-title');
+    const modalClose = modal.querySelector('.modal-close');
+    
+    if (modalContent) {
+      (modalContent as HTMLElement).style.backgroundColor = this.currentTheme.background;
+      (modalContent as HTMLElement).style.borderColor = this.currentTheme.foreground;
+    }
+    
+    if (modalTitle) {
+      (modalTitle as HTMLElement).style.color = this.currentTheme.foreground;
+    }
+    
+    if (modalClose) {
+      (modalClose as HTMLElement).style.color = this.currentTheme.foreground;
+    }
   }
 }

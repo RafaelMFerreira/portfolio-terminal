@@ -5,7 +5,7 @@ export interface Project {
   title: string;
   description: string;
   technologies: string[];
-  imageUrl: string;
+  imageUrl?: string;
   demoUrl?: string;
   codeUrl?: string;
 }
@@ -60,8 +60,7 @@ export class PortfolioService {
       id: 'ai-automation',
       title: 'AI Process Automation',
       description: 'Developed an AI-based solution that reduced operational costs by 40% and increased productivity with less than 5% error rate.',
-      technologies: ['C#', 'SQL Server', 'AI APIs'],
-      imageUrl: '/assets/images/ai-automation.jpg'
+      technologies: ['C#', 'SQL Server', 'AI APIs']
     },
     {
       id: 'portfolio',
