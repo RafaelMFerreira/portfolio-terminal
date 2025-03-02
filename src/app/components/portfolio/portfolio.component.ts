@@ -12,6 +12,7 @@ import { TerminalService } from '../../services/terminal.service';
 })
 export class PortfolioComponent implements OnInit {
   terminalCommands: any[] = [];
+  helpShown = false;
 
   // Display flags
   showIntro = true;
@@ -70,6 +71,14 @@ export class PortfolioComponent implements OnInit {
     await this.sleep(2200);
     await this.glitchName();
     await this.startBootSequence();
+
+    if (!this.helpShown) {
+      setTimeout(() => {
+        // Automatically show help after 3 econds
+        this.onCommandExecuted({command: 'help', output: ''});
+        this.helpShown = true;
+      }, 3000);
+    }
   }
 
   async glitchName(): Promise<void> {
@@ -128,7 +137,7 @@ export class PortfolioComponent implements OnInit {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  onCommandExecuted(event: {command: string, output: string}): void {
+  onCommandExecuted(event: {command: string, output: string | any}): void {
     const cmd = event.command.split(' ')[0];
 
     if (cmd === 'shutdown') {

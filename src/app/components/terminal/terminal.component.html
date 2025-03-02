@@ -1,8 +1,147 @@
 <div #terminalContainer class="terminal-container" [ngClass]="{'crt': enableCrtEffect}">
   <div #terminalOutput class="terminal-output"></div>
+
+  <!-- Visual response area -->
+  <div *ngIf="currentVisualResponse" class="visual-response-area">
+    <div [ngSwitch]="currentVisualResponse.type">
+      <div *ngSwitchCase="'project'" class="project-card">
+        <div class="project-grid">
+          <div *ngFor="let project of currentVisualResponse.data; let i = index" class="project-item" [attr.data-index]="i">
+            <div class="card">
+              <img [src]="project.imageUrl" [alt]="project.title">
+              <div class="card-content">
+                <h3>{{project.title}}</h3>
+                <p>{{project.description}}</p>
+                <div class="tech-tags">
+                  <span *ngFor="let tech of project.technologies; let j = index" class="tech-tag" [attr.data-index]="j">{{tech}}</span>
+                </div>
+                <div class="card-actions">
+                  <a *ngIf="project.demoUrl" [href]="project.demoUrl" target="_blank" class="btn">Demo</a>
+                  <a *ngIf="project.codeUrl" [href]="project.codeUrl" target="_blank" class="btn">Code</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngSwitchCase="'skills'" class="skills-display">
+        <div class="skills-grid">
+          <div *ngFor="let category of currentVisualResponse.data; let i = index" class="skill-category" [attr.data-index]="i">
+            <h3>{{category.name}}</h3>
+            <div class="skill-items">
+              <div *ngFor="let skill of category.skills; let j = index" class="skill-bar" [attr.data-index]="j">
+                <span class="skill-name">{{skill.name}}</span>
+                <div class="skill-level">
+                  <div class="skill-fill" [style.width.%]="skill.level"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngSwitchCase="'about'" class="about-section">
+        <div class="about-content">
+          <img [src]="currentVisualResponse.data.photo" alt="Profile Photo" class="profile-photo">
+          <div class="about-text">
+            <h2>{{currentVisualResponse.data.name}}</h2>
+            <h3>{{currentVisualResponse.data.title}}</h3>
+            <p>{{currentVisualResponse.data.bio}}</p>
+          </div>
+        </div>
+      </div>
+
+      <div *ngSwitchCase="'experience'" class="experience-section">
+        <h2>Professional Experience</h2>
+        <div class="experience-carousel">
+          <button class="carousel-nav prev" (click)="navigateExperience(-1)" [disabled]="currentExperienceIndex === 0">
+            <span>&lt;</span>
+          </button>
+          
+          <div class="experience-container">
+            <div class="experience-slider" [style.transform]="'translateX(' + (-currentExperienceIndex * 100) + '%)'">
+              <div *ngFor="let job of currentVisualResponse.data; let i = index" 
+                   class="experience-card" 
+                   [attr.data-index]="i">
+                <div class="experience-header">
+                  <h3>{{job.title}}</h3>
+                  <div class="experience-company">{{job.company}}</div>
+                  <div class="experience-period">{{job.period}}</div>
+                </div>
+                <ul class="job-responsibilities">
+                  <li *ngFor="let responsibility of job.responsibilities">{{responsibility}}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <button class="carousel-nav next" (click)="navigateExperience(1)" [disabled]="currentExperienceIndex >= currentVisualResponse.data.length - 1">
+            <span>&gt;</span>
+          </button>
+        </div>
+        
+        <div class="carousel-indicators">
+          <button *ngFor="let job of currentVisualResponse.data; let i = index" 
+                  class="indicator" 
+                  [style.backgroundColor]="i === currentExperienceIndex ? 'var(--terminal-accent)' : 'transparent'"
+                  (click)="setExperienceIndex(i)"></button>
+        </div>
+        
+        <div class="navigation-tip">
+          <span>Tip: Use <kbd>←</kbd> and <kbd>→</kbd> arrow keys to navigate experiences</span>
+        </div>
+      </div>
+
+      <div *ngSwitchCase="'contact'" class="contact-form">
+        <div class="contact-info">
+          <h2>Get In Touch</h2>
+          <p>{{currentVisualResponse.data.message}}</p>
+          <div class="contact-links">
+            <div class="contact-item">
+              <span class="contact-label">Email:</span>
+              <a [href]="'mailto:' + currentVisualResponse.data.email">{{currentVisualResponse.data.email}}</a>
+            </div>
+            <div class="contact-item">
+              <span class="contact-label">LinkedIn:</span>
+              <a [href]="'https://' + currentVisualResponse.data.linkedin" target="_blank">{{currentVisualResponse.data.linkedin}}</a>
+            </div>
+            <div class="contact-item">
+              <span class="contact-label">GitHub:</span>
+              <a [href]="'https://' + currentVisualResponse.data.github" target="_blank">{{currentVisualResponse.data.github}}</a>
+            </div>
+            
+          </div>
+        </div>
+        <form class="contact-grid">
+          <input type="text" placeholder="Name" class="form-input">
+          <input type="email" placeholder="Email" class="form-input">
+          <textarea placeholder="Message" class="form-textarea"></textarea>
+          <button type="submit" class="form-button">Send Message</button>
+        </form>
+      </div>
+    </div>
+
+    <button class="close-visual" (click)="currentVisualResponse = null">Close [ESC]</button>
+  </div>
+
+  <!-- Command input area -->
   <div class="input-line">
     <span class="prompt">{{prompt}}</span>
-    <input #commandInput type="text" [(ngModel)]="currentCommand" (keydown)="handleKeyDown($event)" class="command-input" autofocus>
+    <input #commandInput type="text" [(ngModel)]="currentCommand"
+           (keydown)="handleKeyDown($event)"
+           class="command-input"
+           [placeholder]="'Type a command...'"
+           autofocus>
     <span class="terminal-caret"></span>
+  </div>
+
+  <!-- Command button suggestions -->
+  <div class="command-suggestions">
+    <button *ngFor="let cmd of suggestionButtons"
+            (click)="executeButtonCommand(cmd)"
+            class="suggestion-btn">
+      {{cmd}}
+    </button>
   </div>
 </div>
