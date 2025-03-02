@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { environment } from '../../environments/environment';
 
 export interface Project {
   id: string;
@@ -48,13 +49,15 @@ export interface Contact {
 
 //TODO: Figure out a way to have multiple languages available: Portuguese and English
 export class PortfolioService {
+  private baseUrl = environment.baseUrl;
+  
   private projects: Project[] = [
     {
       id: 'automata',
       title: 'Automata Sandbox',
       description: 'An interactive tool for exploring finite state machines and automata theory. Created as a graduation project to help students learn automata theory concepts.',
       technologies: ['React', 'TypeScript', 'P5.js'],
-      imageUrl: '/assets/images/projectAutomataSandbox.jpg',
+      imageUrl: `${this.baseUrl}/assets/images/projectAutomataSandbox.jpg`,
       demoUrl: 'https://igorsolerc.github.io/automata-sandbox/',
       codeUrl: 'https://github.com/IgorSolerC/automata-sandbox'
     },
@@ -69,7 +72,7 @@ export class PortfolioService {
       title: 'Terminal Portfolio',
       description: 'This interactive terminal-style portfolio website showcasing my projects and skills.',
       technologies: ['Angular', 'TypeScript', 'CSS Animations'],
-      imageUrl: '/assets/images/projectTerminal.jpg',
+      imageUrl: `${this.baseUrl}/assets/images/projectTerminal.jpg`,
       codeUrl: 'https://github.com/RafaelMFerreira/portfolio-terminal'
     }
   ];
@@ -167,7 +170,7 @@ export class PortfolioService {
     name: 'Rafael Miranda Ferreira',
     title: 'Full-Stack Developer',
     bio: 'Sou um desenvolvedor apaixonado por tecnologia e resolução de problemas. Formado em Ciência da Computação pela Universidade Presbiteriana Mackenzie (2020-2024), atualmente trabalho como Desenvolvedor Pleno na SERGET Mobilidade Viária. Sempre buscando inovação, sou apaixonado por inteligência artificial e otimização de processos.',
-    photo: '/assets/images/profile.jfif' //TODO: Better photo
+    photo: `${this.baseUrl}/assets/images/profile.jfif` //TODO: Better photo
   };
 
 
