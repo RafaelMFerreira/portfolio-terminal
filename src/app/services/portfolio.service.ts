@@ -106,7 +106,8 @@ export class PortfolioService {
       skills: [
         { name: 'Git', level: 80 },
         { name: 'Docker', level: 75 },
-        { name: 'IIS/Nginx', level: 70 },
+        { name: 'IIS', level: 70 },
+        { name: 'Nginx', level: 70 },        
         { name: 'WSL', level: 65 }
       ]
     }

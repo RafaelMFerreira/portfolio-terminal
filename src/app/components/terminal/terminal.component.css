@@ -20,6 +20,12 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.terminal-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 
 .terminal-output {
@@ -27,6 +33,12 @@
   overflow-y: auto;
   margin-bottom: 10px;
   white-space: pre-wrap;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.terminal-output::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 
 .input-line {
