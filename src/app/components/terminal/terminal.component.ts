@@ -346,9 +346,10 @@ export class TerminalComponent implements OnInit {
     container.style.fontFamily = theme.fontFamily;
 
     // Apply theme to input
+    console.log(input)
     input.style.color = theme.foreground;
     input.style.fontFamily = theme.fontFamily;
-    input.style.caretColor = 'transparent';
+    input.style.caretColor = 'transparent'; //TODO: Figure out why the default caret is still showing up
     
     // Apply theme to visual response areas
     const visualResponseAreas = container.querySelectorAll('.visual-response-area, .project-card, .skills-display, .about-section, .contact-form');

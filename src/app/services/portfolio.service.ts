@@ -45,6 +45,8 @@ export interface Contact {
 @Injectable({
   providedIn: 'root'
 })
+
+//TODO: Figure out a way to have multiple languages available: Portuguese and English
 export class PortfolioService {
   private projects: Project[] = [
     {
@@ -68,10 +70,13 @@ export class PortfolioService {
       description: 'This interactive terminal-style portfolio website showcasing my projects and skills.',
       technologies: ['Angular', 'TypeScript', 'CSS Animations'],
       imageUrl: '/assets/images/projectTerminal.jpg',
-      codeUrl: 'https://github.com/RafaelMFerreira/terminal-portfolio'
+      codeUrl: 'https://github.com/RafaelMFerreira/portfolio-terminal'
     }
   ];
 
+
+  //TODO: Find a better way to convey skillsets.
+  //Level bars are pretty but don't mean much
   private skills: SkillCategory[] = [
     {
       name: 'Backend',
@@ -132,7 +137,8 @@ export class PortfolioService {
       responsibilities: [
         'Auxiliei na implantação de nosso sistema em um grande cliente',
         'Colaborei na adaptação das metodologias ágeis às necessidades da equipe',
-        'Realizei a migração da infraestrutura (Linux) de produção para outro servidor'
+        'Realizei a migração da infraestrutura (Linux) de produção para outro servidor',
+        'Automatizei um processo manual de geração de relatórios, reduzindo o tempo de semanas para segundos.'
       ]
     },
     {
@@ -161,9 +167,11 @@ export class PortfolioService {
     name: 'Rafael Miranda Ferreira',
     title: 'Full-Stack Developer',
     bio: 'Sou um desenvolvedor apaixonado por tecnologia e resolução de problemas. Formado em Ciência da Computação pela Universidade Presbiteriana Mackenzie (2020-2024), atualmente trabalho como Desenvolvedor Pleno na SERGET Mobilidade Viária. Sempre buscando inovação, sou apaixonado por inteligência artificial e otimização de processos.',
-    photo: '/assets/images/profile.jfif'
+    photo: '/assets/images/profile.jfif' //TODO: Better photo
   };
 
+
+  //TODO: Actually enable the form to send e-mails
   private contactInfo: Contact = {
     email: 'rafaelmirandaferreira@outlook.com',
     linkedin: 'linkedin.com/in/rafael-miranda-ferreira/',
