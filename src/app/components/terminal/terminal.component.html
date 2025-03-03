@@ -130,7 +130,7 @@
       </div>
     </div>
 
-    <button class="close-visual" (click)="currentVisualResponse = null">{{ languageService.getCurrentLanguage() === 'en' ? 'Close [ESC]' : 'Fechar [ESC]' }}</button>
+    <button class="close-visual" (click)="closeVisualResponse()">{{ languageService.getCurrentLanguage() === 'en' ? 'Close [ESC]' : 'Fechar [ESC]' }}</button>
   </div>
 
   <!-- Command input area -->

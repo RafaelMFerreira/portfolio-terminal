@@ -217,6 +217,7 @@ export class TerminalComponent implements OnInit {
       }
       if (this.currentVisualResponse) {
         this.currentVisualResponse = null;
+        this.scrollToBottom();
         event.preventDefault();
         return;
       }
@@ -297,6 +298,8 @@ export class TerminalComponent implements OnInit {
         this.applyThemeToVisualElements();
         // Refresh animations for the new visual response
         this.refreshVisualResponseAnimations();
+        // Ensure terminal is scrolled to bottom after visual response renders
+        this.scrollToBottom();
       }, 50);
     } else if (output) {
       this.currentVisualResponse = null;
@@ -351,7 +354,7 @@ export class TerminalComponent implements OnInit {
     element.className = className;
     element.innerHTML = text.replace(/\n/g, '<br>');
     this.terminalOutput.nativeElement.appendChild(element);
-    this.terminalOutput.nativeElement.scrollTop = this.terminalOutput.nativeElement.scrollHeight;
+    this.scrollToBottom();
   }
 
   getHelpText(): string {
@@ -413,6 +416,9 @@ export class TerminalComponent implements OnInit {
     const theme = this.themes.find(t => t.name === themeName);
 
     if (theme) {
+      // Store current visual response type and data if any
+      const currentResponse = this.currentVisualResponse;
+
       this.currentTheme = theme;
       this.applyTheme(theme);
       
@@ -430,8 +436,12 @@ export class TerminalComponent implements OnInit {
       document.documentElement.style.setProperty('--terminal-accent-transparent', transparentAccent);
       document.documentElement.style.setProperty('--terminal-border-light', borderLight);
       
-      if (this.currentVisualResponse) {
-        this.applyThemeToVisualElements();
+      // If there was a visual response, restore it after theme change
+      if (currentResponse) {
+        setTimeout(() => {
+          this.currentVisualResponse = currentResponse;
+          this.applyThemeToVisualElements();
+        }, 50);
       }
       
       this.themeChanged.emit(theme);
@@ -442,6 +452,7 @@ export class TerminalComponent implements OnInit {
   }
 
   handleLanguageCommand(args: string[]): string {
+    this.scrollToBottom();  
     if (!args.length || args[0] === 'list') {
       const currentLang = this.languageService.getCurrentLanguage();
       return `Available languages:\n- en (English) ${currentLang === 'en' ? '[current]' : ''}\n- pt (Português) ${currentLang === 'pt' ? '[current]' : ''}`;
@@ -449,7 +460,19 @@ export class TerminalComponent implements OnInit {
 
     const lang = args[0].toLowerCase();
     if (lang === 'en' || lang === 'pt') {
+      // Store current visual response type and data if any
+      const currentResponse = this.currentVisualResponse;
+      
       this.languageService.setLanguage(lang);
+      
+      // If there was a visual response, restore it after language change
+      if (currentResponse) {
+        setTimeout(() => {
+          this.currentVisualResponse = currentResponse;
+          this.applyThemeToVisualElements();
+        }, 50);
+      }
+      
       return lang === 'en' 
         ? 'Language changed to English' 
         : 'Idioma alterado para Português';
@@ -766,5 +789,18 @@ export class TerminalComponent implements OnInit {
 
   get suggestionButtons(): string[] {
     return this.languageService.getCurrentLanguage() === 'en' ? this.suggestionButtonsEn : this.suggestionButtonsPt;
+  }
+
+  private scrollToBottom(): void {
+    setTimeout(() => {
+      if (this.terminalOutput?.nativeElement) {
+        this.terminalOutput.nativeElement.scrollTop = this.terminalOutput.nativeElement.scrollHeight;
+      }
+    }, 0);
+  }
+
+  closeVisualResponse(): void {
+    this.currentVisualResponse = null;
+    this.scrollToBottom();
   }
 }
