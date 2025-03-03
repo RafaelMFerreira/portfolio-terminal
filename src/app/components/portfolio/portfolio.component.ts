@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TerminalComponent } from '../terminal/terminal.component';
 import { TerminalService } from '../../services/terminal.service';
+import { PortfolioService } from '../../services/portfolio.service';
 
 @Component({
   selector: 'app-portfolio',
@@ -45,7 +46,96 @@ export class PortfolioComponent implements OnInit {
     "Loading minimal environment..."
   ];
 
-  constructor(private terminalService: TerminalService) {
+  constructor(
+    private terminalService: TerminalService,
+    private portfolioService: PortfolioService
+  ) {
+    this.initPortfolioCommands();
+  }
+
+  private initPortfolioCommands(): void {
+    // Portfolio specific commands
+    this.terminalService.addCommand({
+      name: 'projects',
+      description: 'List all projects or view a specific project',
+      visualMode: true,
+      action: (args) => {
+        if (args.length > 0) {
+          const project = this.portfolioService.getProject(args[0]);
+          if (project) {
+            return {
+              type: 'project',
+              data: [project]
+            };
+          } else {
+            return `Project "${args[0]}" not found. Use "projects" to see all projects.`;
+          }
+        } else {
+          return {
+            type: 'project',
+            data: this.portfolioService.getProjects()
+          };
+        }
+      }
+    });
+
+    this.terminalService.addCommand({
+      name: 'skills',
+      description: 'Display skills and expertise',
+      visualMode: true,
+      action: () => {
+        return {
+          type: 'skills',
+          data: this.portfolioService.getSkills()
+        };
+      }
+    });
+
+    this.terminalService.addCommand({
+      name: 'about',
+      description: 'Display information about me',
+      visualMode: true,
+      action: () => {
+        return {
+          type: 'about',
+          data: this.portfolioService.getAboutInfo()
+        };
+      }
+    });
+
+    this.terminalService.addCommand({
+      name: 'experience',
+      description: 'View my professional experience',
+      visualMode: true,
+      action: () => {
+        return {
+          type: 'experience',
+          data: this.portfolioService.getExperience()
+        };
+      }
+    });
+
+    this.terminalService.addCommand({
+      name: 'contact',
+      description: 'Get in touch with me',
+      visualMode: true,
+      action: () => {
+        return {
+          type: 'contact',
+          data: this.portfolioService.getContactInfo()
+        };
+      }
+    });
+
+    this.terminalService.addCommand({
+      name: 'download',
+      description: 'Download my resume',
+      action: () => {
+        window.open('/assets/documents/resume.pdf', '_blank');
+        return 'Downloading resume...';
+      }
+    });
+
     // this.terminalService.addCommand({
     //   name: 'launch',
     //   description: 'Launch a project',

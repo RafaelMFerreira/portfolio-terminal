@@ -112,94 +112,24 @@ export class TerminalComponent implements OnInit {
       }
     });
 
-    // Set up commands
-    if (this.commands.length === 0) {
-      this.commands = [
-        {
-          name: 'help',
-          description: 'Show available commands',
-          action: () => this.getHelpText()
-        },
-        {
-          name: 'clear',
-          description: 'Clear the terminal',
-          action: () => {
-            this.clearTerminal();
-            return '';
-          }
-        },
-        {
-          name: 'theme',
-          description: 'Change the terminal theme (usage: theme [name])',
-          action: (args) => this.handleThemeCommand(args)
-        },
-        {
-          name: 'projects',
-          description: 'Show my projects',
-          visualMode: true,
-          action: () => {
-            return {
-              type: 'project',
-              data: this.portfolioService.getProjects()
-            };
-          }
-        },
-        {
-          name: 'skills',
-          description: 'Show my skills',
-          visualMode: true,
-          action: () => {
-            return {
-              type: 'skills',
-              data: this.portfolioService.getSkills()
-            };
-          }
-        },
-        {
-          name: 'about',
-          description: 'Show information about me',
-          visualMode: true,
-          action: () => {
-            return {
-              type: 'about',
-              data: this.portfolioService.getAboutInfo()
-            };
-          }
-        },
-        {
-          name: 'experience',
-          description: 'Show my professional experience',
-          visualMode: true,
-          action: () => {
-            return {
-              type: 'experience',
-              data: this.portfolioService.getExperience()
-            };
-          }
-        },
-        {
-          name: 'contact',
-          description: 'Show contact information',
-          visualMode: true,
-          action: () => {
-            return {
-              type: 'contact',
-              data: this.portfolioService.getContactInfo()
-            };
-          }
-        },
-        {
-          name: 'language',
-          description: 'Change the current language (usage: language [en|pt])',
-          action: (args) => this.handleLanguageCommand(args)
-        },
-        {
-          name: 'lang',
-          description: 'Alias for language command',
-          action: (args) => this.handleLanguageCommand(args)
-        }
-      ];
-    }
+    // Add UI-specific commands
+    this.commands.push(
+      {
+        name: 'theme',
+        description: 'Change the terminal theme (usage: theme [name])',
+        action: (args) => this.handleThemeCommand(args)
+      },
+      {
+        name: 'language',
+        description: 'Change the current language (usage: language [en|pt])',
+        action: (args) => this.handleLanguageCommand(args)
+      },
+      {
+        name: 'lang',
+        description: 'Alias for language command',
+        action: (args) => this.handleLanguageCommand(args)
+      }
+    );
 
     // Focus the input
     setTimeout(() => {
@@ -385,13 +315,19 @@ export class TerminalComponent implements OnInit {
         'habilidades': 'skills',
         'sobre': 'about',
         'experiência': 'experience',
-        'contato': 'contact',
-        'language': 'language'
+        'contato': 'contact'
       };
       cmdToExecute = commandMap[command] || command;
     }
+
+    // Special handling for language button
+    if (cmdToExecute === 'language') {
+      const newLang = this.languageService.getCurrentLanguage() === 'en' ? 'pt' : 'en';
+      this.currentCommand = `language ${newLang}`;
+    } else {
+      this.currentCommand = cmdToExecute;
+    }
     
-    this.currentCommand = cmdToExecute;
     this.executeCommand();
   }
 
@@ -518,8 +454,10 @@ export class TerminalComponent implements OnInit {
         ? 'Language changed to English' 
         : 'Idioma alterado para Português';
     }
-
-    return `Language "${args[0]}" not supported. Available options: en, pt`;
+    const currentLang = this.languageService.getCurrentLanguage();
+    return currentLang === 'en' 
+      ? `Language "${args[0]}" not supported. Available options: en, pt`
+      : `Idioma "${args[0]}" não suportado. Opções disponíveis: en, pt`;
   }
 
   applyTheme(theme: TerminalTheme): void {

@@ -191,7 +191,7 @@ export class PortfolioService {
   private experienceEn: Experience[] = [
     {
       title: 'Mid-level Developer',
-      company: 'SERGET Mobility Solutions',
+      company: 'SERGET Mobilidade Viária',
       period: 'May 2024 - Present',
       responsibilities: [
         'Manage new projects, planning and requirements gathering',
@@ -202,7 +202,7 @@ export class PortfolioService {
     },
     {
       title: 'Junior Developer',
-      company: 'SERGET Mobility Solutions',
+      company: 'SERGET Mobilidade Viária',
       period: 'June 2023 - May 2024',
       responsibilities: [
         'Assisted in implementing our system for a major client',
@@ -213,7 +213,7 @@ export class PortfolioService {
     },
     {
       title: 'Trainee Developer',
-      company: 'SERGET Mobility Solutions',
+      company: 'SERGET Mobilidade Viária',
       period: 'February 2022 - June 2023',
       responsibilities: [
         'Developed and maintained scalable web applications',
@@ -223,7 +223,7 @@ export class PortfolioService {
     },
     {
       title: 'Intern',
-      company: 'SERGET Mobility Solutions',
+      company: 'SERGET Mobilidade Viária',
       period: 'July 2021 - February 2022',
       responsibilities: [
         'First professional experience in the field',
@@ -281,7 +281,7 @@ export class PortfolioService {
   private aboutInfoEn: AboutInfo = {
     name: 'Rafael Miranda Ferreira',
     title: 'Full-Stack Developer',
-    bio: 'I am a developer passionate about technology and problem-solving. Graduated in Computer Science from Mackenzie Presbyterian University (2020-2024), I currently work as a Mid-level Developer at SERGET Mobility Solutions. Always seeking innovation, I am passionate about artificial intelligence and process optimization.',
+    bio: 'I am a developer passionate about technology and problem-solving. Graduated in Computer Science from Mackenzie Presbyterian University (2020-2024), I currently work as a Mid-level Developer at SERGET Mobilidade Viária. Always seeking innovation, I am passionate about artificial intelligence and process optimization.',
     photo: `${this.baseUrl}/assets/images/profile.jfif` //TODO: Better photo
   };
 
@@ -302,10 +302,10 @@ export class PortfolioService {
   };
 
   private contactInfoPt: Contact = {
-    email: 'contato@rafaelmiranda.dev',
-    linkedin: 'linkedin.com/in/rafaelmiranda',
-    github: 'github.com/rafaelmiranda',
-    website: 'rafaelmiranda.dev',
+    email: 'rafaelmirandaferreira@outlook.com',
+    linkedin: 'linkedin.com/in/rafael-miranda-ferreira',
+    github: 'github.com/rafaelMFerreira',
+    website: 'www.rafaelmirandaferreira.com',
     message: 'Interessado em trabalhar juntos? Envie-me uma mensagem e vamos conversar sobre como posso ajudar em seu próximo projeto!'
   };
 
