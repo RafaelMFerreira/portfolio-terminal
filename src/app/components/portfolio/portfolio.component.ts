@@ -305,13 +305,7 @@ export class PortfolioComponent implements OnInit {
     this.nameText = 'Rafael Miranda Ferreira';
     this.bootLog = '';
     this.helpShown = false;
-
-    //debug
-    this.sleep(1000);
-    //this.showTerminal = true;
-    //this.nameOpacity = 0;
-    //return
-    
+   
     // Apply theme in case of changes
     this.applyStoredTheme();
     // Start the sequence again
