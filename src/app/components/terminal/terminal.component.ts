@@ -81,7 +81,16 @@ export class TerminalComponent implements OnInit {
   constructor(
     private portfolioService: PortfolioService,
     public languageService: LanguageService
-  ) {}
+  ) {
+    // Load saved theme from localStorage if it exists
+    const savedTheme = localStorage.getItem('terminal-theme');
+    if (savedTheme) {
+      const theme = this.themes.find(t => t.name === savedTheme);
+      if (theme) {
+        this.currentTheme = theme;
+      }
+    }
+  }
 
   ngOnInit(): void {
     // Add initial message
@@ -426,6 +435,9 @@ export class TerminalComponent implements OnInit {
 
       this.currentTheme = theme;
       this.applyTheme(theme);
+      
+      // Save theme preference to localStorage
+      localStorage.setItem('terminal-theme', theme.name);
       
       // Update CSS variables when theme changes
       document.documentElement.style.setProperty('--terminal-bg', theme.background);
