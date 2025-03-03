@@ -57,8 +57,8 @@ export class TerminalComponent implements OnInit {
   commandHistory: string[] = [];
   historyIndex = -1;
   currentVisualResponse: VisualResponse | null = null;
-  suggestionButtonsEn: string[] = ['projects', 'skills', 'about', 'experience', 'contact', 'language'];
-  suggestionButtonsPt: string[] = ['projetos', 'habilidades', 'sobre', 'experiência', 'contato', 'language'];
+  suggestionButtonsEn: string[] = ['projects', 'skills', 'about', 'experience', 'contact', 'theme', 'language'];
+  suggestionButtonsPt: string[] = ['projetos', 'habilidades', 'sobre', 'experiência', 'contato', 'tema', 'language'];
   currentExperienceIndex = 0;
   
   // Image modal properties
@@ -128,7 +128,7 @@ export class TerminalComponent implements OnInit {
         name: 'lang',
         description: 'Alias for language command',
         action: (args) => this.handleLanguageCommand(args)
-      }
+      } 
     );
 
     // Focus the input
@@ -258,9 +258,6 @@ export class TerminalComponent implements OnInit {
       if (cmd === 'clear') {
         this.clearTerminal();
         output = '';
-      } else if (cmd === 'help') {
-        output = this.getHelpText();
-        this.addOutput(output as string);
       } else {
         // Check custom commands
         const command = this.commands.find(c => c.name === cmd);
@@ -318,7 +315,8 @@ export class TerminalComponent implements OnInit {
         'habilidades': 'skills',
         'sobre': 'about',
         'experiência': 'experience',
-        'contato': 'contact'
+        'contato': 'contact',
+        'tema': 'theme'
       };
       cmdToExecute = commandMap[command] || command;
     }
@@ -327,7 +325,14 @@ export class TerminalComponent implements OnInit {
     if (cmdToExecute === 'language') {
       const newLang = this.languageService.getCurrentLanguage() === 'en' ? 'pt' : 'en';
       this.currentCommand = `language ${newLang}`;
-    } else {
+    } 
+    // Special handling for theme button
+    else if (cmdToExecute === 'theme') {
+      const currentThemeIndex = this.themes.findIndex(t => t.name === this.currentTheme.name);
+      const nextThemeIndex = (currentThemeIndex + 1) % this.themes.length;
+      this.currentCommand = `theme ${this.themes[nextThemeIndex].name}`;
+    }
+    else {
       this.currentCommand = cmdToExecute;
     }
     
@@ -441,20 +446,22 @@ export class TerminalComponent implements OnInit {
         setTimeout(() => {
           this.currentVisualResponse = currentResponse;
           this.applyThemeToVisualElements();
+          this.scrollToBottom();
         }, 50);
       }
       
       this.themeChanged.emit(theme);
       return `Theme changed to ${theme.name}`;
     }
-
+    
+    this.scrollToBottom();
     return `Theme "${themeName}" not found. Use "theme list" to see available themes.`;
   }
 
   handleLanguageCommand(args: string[]): string {
-    this.scrollToBottom();  
     if (!args.length || args[0] === 'list') {
       const currentLang = this.languageService.getCurrentLanguage();
+      this.scrollToBottom();  
       return `Available languages:\n- en (English) ${currentLang === 'en' ? '[current]' : ''}\n- pt (Português) ${currentLang === 'pt' ? '[current]' : ''}`;
     }
 
@@ -470,13 +477,16 @@ export class TerminalComponent implements OnInit {
         setTimeout(() => {
           this.currentVisualResponse = currentResponse;
           this.applyThemeToVisualElements();
+          this.scrollToBottom();  
         }, 50);
       }
-      
+    
       return lang === 'en' 
         ? 'Language changed to English' 
         : 'Idioma alterado para Português';
     }
+
+    this.scrollToBottom();      
     const currentLang = this.languageService.getCurrentLanguage();
     return currentLang === 'en' 
       ? `Language "${args[0]}" not supported. Available options: en, pt`
