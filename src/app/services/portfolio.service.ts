@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
+import { LanguageService, Language } from './language.service';
 
 export interface Project {
   id: string;
@@ -46,12 +47,10 @@ export interface Contact {
 @Injectable({
   providedIn: 'root'
 })
-
-//TODO: Figure out a way to have multiple languages available: Portuguese and English
 export class PortfolioService {
   private baseUrl = environment.baseUrl;
   
-  private projects: Project[] = [
+  private projectsEn: Project[] = [
     {
       id: 'automata',
       title: 'Automata Sandbox',
@@ -77,10 +76,35 @@ export class PortfolioService {
     }
   ];
 
+  private projectsPt: Project[] = [
+    {
+      id: 'automata',
+      title: 'Automata Sandbox',
+      description: 'Uma ferramenta interativa para explorar máquinas de estado finito e teoria de autômatos. Criado como projeto de graduação para ajudar estudantes a aprender conceitos de teoria de autômatos.',
+      technologies: ['React', 'TypeScript', 'P5.js'],
+      imageUrl: `${this.baseUrl}/assets/images/projectAutomataSandbox.jpg`,
+      demoUrl: 'https://igorsolerc.github.io/automata-sandbox/',
+      codeUrl: 'https://github.com/IgorSolerC/automata-sandbox'
+    },
+    {
+      id: 'ai-automation',
+      title: 'Automação de Processos com IA',
+      description: 'Desenvolveu uma solução baseada em IA que reduziu custos operacionais em 40% e aumentou a produtividade com menos de 5% de taxa de erro.',
+      technologies: ['C#', 'SQL Server', 'AI APIs']
+    },
+    {
+      id: 'portfolio',
+      title: 'Terminal Portfolio',
+      description: 'Este site de portfólio interativo estilo terminal apresentando meus projetos e habilidades.',
+      technologies: ['Angular', 'TypeScript', 'CSS Animations'],
+      imageUrl: `${this.baseUrl}/assets/images/projectTerminal.jpg`,
+      codeUrl: 'https://github.com/RafaelMFerreira/portfolio-terminal'
+    }
+  ];
 
   //TODO: Find a better way to convey skillsets.
   //Level bars are pretty but don't mean much
-  private skills: SkillCategory[] = [
+  private skillsEn: SkillCategory[] = [
     {
       name: 'Backend',
       skills: [
@@ -114,6 +138,7 @@ export class PortfolioService {
       skills: [
         { name: 'Git', level: 80 },
         { name: 'Docker', level: 75 },
+        { name: 'RabbitMQ', level: 75},
         { name: 'IIS', level: 70 },
         { name: 'Nginx', level: 70 },        
         { name: 'WSL', level: 65 }
@@ -121,7 +146,94 @@ export class PortfolioService {
     }
   ];
 
-  private experience: Experience[] = [
+  private skillsPt: SkillCategory[] = [
+    {
+      name: 'Backend',
+      skills: [
+        { name: 'C# (.NET)', level: 90 },
+        { name: 'ASP.NET Core', level: 85 },
+        { name: 'Entity Framework', level: 80 },
+        { name: 'Python', level: 70 }
+      ]
+    },
+    {
+      name: 'Frontend',
+      skills: [
+        { name: 'HTML/CSS', level: 85 },
+        { name: 'JavaScript', level: 80 },
+        { name: 'TypeScript', level: 75 },
+        { name: 'Angular', level: 80 },
+        { name: 'React', level: 70 }
+      ]
+    },
+    {
+      name: 'Databases',
+      skills: [
+        { name: 'SQL Server', level: 85 },
+        { name: 'MongoDB', level: 70 },
+        { name: 'ClickHouse', level: 65 },
+        { name: 'Redis', level: 60 }
+      ]
+    },
+    {
+      name: 'DevOps',
+      skills: [
+        { name: 'Git', level: 80 },
+        { name: 'Docker', level: 75 },
+        { name: 'RabbitMQ', level: 75},
+        { name: 'IIS', level: 70 },
+        { name: 'Nginx', level: 70 },        
+        { name: 'WSL', level: 65 }
+      ]
+    }
+  ];
+
+  private experienceEn: Experience[] = [
+    {
+      title: 'Mid-level Developer',
+      company: 'SERGET Mobility Solutions',
+      period: 'May 2024 - Present',
+      responsibilities: [
+        'Manage new projects, planning and requirements gathering',
+        'Coordinate and assist the team in developing effective solutions',
+        'Participate in client meetings to understand needs',
+        'Designed databases and implemented optimizations in critical systems'
+      ]
+    },
+    {
+      title: 'Junior Developer',
+      company: 'SERGET Mobility Solutions',
+      period: 'June 2023 - May 2024',
+      responsibilities: [
+        'Assisted in implementing our system for a major client',
+        'Collaborated in adapting agile methodologies to team needs',
+        'Migrated production infrastructure (Linux) to another server',
+        'Automated a manual report generation process, reducing time from weeks to seconds'
+      ]
+    },
+    {
+      title: 'Trainee Developer',
+      company: 'SERGET Mobility Solutions',
+      period: 'February 2022 - June 2023',
+      responsibilities: [
+        'Developed and maintained scalable web applications',
+        'Implemented improvements that reduced costs using AI',
+        'Participated in developing new features across various systems'
+      ]
+    },
+    {
+      title: 'Intern',
+      company: 'SERGET Mobility Solutions',
+      period: 'July 2021 - February 2022',
+      responsibilities: [
+        'First professional experience in the field',
+        'Worked on maintenance and development of small features',
+        'Worked with agile methodologies (Scrum/Kanban)'
+      ]
+    }
+  ];
+
+  private experiencePt: Experience[] = [
     {
       title: 'Desenvolvedor Pleno',
       company: 'SERGET Mobilidade Viária',
@@ -166,46 +278,61 @@ export class PortfolioService {
     }
   ];
 
-  private aboutInfo: AboutInfo = {
+  private aboutInfoEn: AboutInfo = {
     name: 'Rafael Miranda Ferreira',
     title: 'Full-Stack Developer',
-    bio: 'Sou um desenvolvedor apaixonado por tecnologia e resolução de problemas. Formado em Ciência da Computação pela Universidade Presbiteriana Mackenzie (2020-2024), atualmente trabalho como Desenvolvedor Pleno na SERGET Mobilidade Viária. Sempre buscando inovação, sou apaixonado por inteligência artificial e otimização de processos.',
+    bio: 'I am a developer passionate about technology and problem-solving. Graduated in Computer Science from Mackenzie Presbyterian University (2020-2024), I currently work as a Mid-level Developer at SERGET Mobility Solutions. Always seeking innovation, I am passionate about artificial intelligence and process optimization.',
     photo: `${this.baseUrl}/assets/images/profile.jfif` //TODO: Better photo
   };
 
+  private aboutInfoPt: AboutInfo = {
+    name: 'Rafael Miranda',
+    title: 'Desenvolvedor Full Stack',
+    bio: 'Sou um desenvolvedor full stack apaixonado por criar soluções web elegantes e eficientes. Com mais de 5 anos de experiência em desenvolvimento web, especializo-me em tecnologias modernas como Angular, React, Node.js e .NET Core. Adoro resolver problemas complexos e aprender novas tecnologias.',
+    photo: `${this.baseUrl}/assets/images/profile.jfif`
+  };
 
   //TODO: Actually enable the form to send e-mails
-  private contactInfo: Contact = {
+  private contactInfoEn: Contact = {
     email: 'rafaelmirandaferreira@outlook.com',
     linkedin: 'linkedin.com/in/rafael-miranda-ferreira/',
     github: 'github.com/RafaelMFerreira/',
     website: 'www.rafaelmirandaferreira.com',
-    message: 'Sinta-se à vontade para entrar em contato para colaborações, oportunidades ou simplesmente para bater um papo!'
+    message: 'Feel free to get in touch for collaborations, opportunities, or just to chat!'
   };
 
-  constructor() { }
+  private contactInfoPt: Contact = {
+    email: 'contato@rafaelmiranda.dev',
+    linkedin: 'linkedin.com/in/rafaelmiranda',
+    github: 'github.com/rafaelmiranda',
+    website: 'rafaelmiranda.dev',
+    message: 'Interessado em trabalhar juntos? Envie-me uma mensagem e vamos conversar sobre como posso ajudar em seu próximo projeto!'
+  };
+
+  constructor(private languageService: LanguageService) { }
 
   getProjects(): Project[] {
-    return this.projects;
+    return this.languageService.getCurrentLanguage() === 'en' ? this.projectsEn : this.projectsPt;
   }
 
   getProject(id: string): Project | undefined {
-    return this.projects.find(p => p.id === id);
+    const projects = this.getProjects();
+    return projects.find(p => p.id === id);
   }
 
   getSkills(): SkillCategory[] {
-    return this.skills;
+    return this.languageService.getCurrentLanguage() === 'en' ? this.skillsEn : this.skillsPt;
   }
 
   getAboutInfo(): AboutInfo {
-    return this.aboutInfo;
+    return this.languageService.getCurrentLanguage() === 'en' ? this.aboutInfoEn : this.aboutInfoPt;
   }
 
   getExperience(): Experience[] {
-    return this.experience;
+    return this.languageService.getCurrentLanguage() === 'en' ? this.experienceEn : this.experiencePt;
   }
 
   getContactInfo(): Contact {
-    return this.contactInfo;
+    return this.languageService.getCurrentLanguage() === 'en' ? this.contactInfoEn : this.contactInfoPt;
   }
 }

@@ -46,20 +46,20 @@ export class PortfolioComponent implements OnInit {
   ];
 
   constructor(private terminalService: TerminalService) {
-    this.terminalService.addCommand({
-      name: 'launch',
-      description: 'Launch a project',
-      action: (args) => {
-        const project = args[0];
-        if (project === 'portfolio') {
-          return 'Launching portfolio...';
-        } else if (project === 'automata') {
-          return 'Launching Automata Sandbox...';
-        } else {
-          return `launch: project not found: ${project}`;
-        }
-      }
-    });
+    // this.terminalService.addCommand({
+    //   name: 'launch',
+    //   description: 'Launch a project',
+    //   action: (args) => {
+    //     const project = args[0];
+    //     if (project === 'portfolio') {
+    //       return 'Launching portfolio...';
+    //     } else if (project === 'automata') {
+    //       return 'Launching Automata Sandbox...';
+    //     } else {
+    //       return `launch: project not found: ${project}`;
+    //     }
+    //   }
+    // });
   }
 
   ngOnInit(): void {

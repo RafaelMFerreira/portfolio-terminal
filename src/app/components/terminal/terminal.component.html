@@ -15,7 +15,7 @@
                 </div>
               </div>
               <div *ngIf="!project.imageUrl" class="no-image">
-                <span class="no-image-text">No image available</span>
+                <span class="no-image-text">{{ languageService.getCurrentLanguage() === 'en' ? 'No image available' : 'Imagem não disponível' }}</span>
               </div>
               <div class="card-content">
                 <h3>{{project.title}}</h3>
@@ -24,8 +24,8 @@
                   <span *ngFor="let tech of project.technologies; let j = index" class="tech-tag" [attr.data-index]="j">{{tech}}</span>
                 </div>
                 <div class="card-actions">
-                  <a *ngIf="project.demoUrl" [href]="project.demoUrl" target="_blank" class="btn">Demo</a>
-                  <a *ngIf="project.codeUrl" [href]="project.codeUrl" target="_blank" class="btn">Code</a>
+                  <a *ngIf="project.demoUrl" [href]="project.demoUrl" target="_blank" class="btn">{{ languageService.getCurrentLanguage() === 'en' ? 'Demo' : 'Demo' }}</a>
+                  <a *ngIf="project.codeUrl" [href]="project.codeUrl" target="_blank" class="btn">{{ languageService.getCurrentLanguage() === 'en' ? 'Code' : 'Código' }}</a>
                 </div>
               </div>
             </div>
@@ -61,7 +61,7 @@
       </div>
 
       <div *ngSwitchCase="'experience'" class="experience-section">
-        <h2>Professional Experience</h2>
+        <h2>{{ languageService.getCurrentLanguage() === 'en' ? 'Professional Experience' : 'Experiência Profissional' }}</h2>
         <div class="experience-carousel">
           <button class="carousel-nav prev" (click)="navigateExperience(-1)" [disabled]="currentExperienceIndex === 0">
             <span>&lt;</span>
@@ -97,13 +97,13 @@
         </div>
         
         <div class="navigation-tip">
-          <span>Tip: Use <kbd>←</kbd> and <kbd>→</kbd> arrow keys to navigate experiences</span>
+          <span>{{ languageService.getCurrentLanguage() === 'en' ? 'Tip: Use' : 'Dica: Use' }} <kbd>←</kbd> {{ languageService.getCurrentLanguage() === 'en' ? 'and' : 'e' }} <kbd>→</kbd> {{ languageService.getCurrentLanguage() === 'en' ? 'arrow keys to navigate experiences' : 'teclas de seta para navegar pelas experiências' }}</span>
         </div>
       </div>
 
       <div *ngSwitchCase="'contact'" class="contact-form">
         <div class="contact-info">
-          <h2>Get In Touch</h2>
+          <h2>{{ languageService.getCurrentLanguage() === 'en' ? 'Get In Touch' : 'Entre em Contato' }}</h2>
           <p>{{currentVisualResponse.data.message}}</p>
           <div class="contact-links">
             <div class="contact-item">
@@ -122,15 +122,15 @@
           </div>
         </div>
         <form class="contact-grid">
-          <input type="text" placeholder="Name" class="form-input">
+          <input type="text" placeholder="{{ languageService.getCurrentLanguage() === 'en' ? 'Name' : 'Nome' }}" class="form-input">
           <input type="email" placeholder="Email" class="form-input">
-          <textarea placeholder="Message" class="form-textarea"></textarea>
-          <button type="submit" class="form-button">Send Message</button>
+          <textarea placeholder="{{ languageService.getCurrentLanguage() === 'en' ? 'Message' : 'Mensagem' }}" class="form-textarea"></textarea>
+          <button type="submit" class="form-button">{{ languageService.getCurrentLanguage() === 'en' ? 'Send Message' : 'Enviar Mensagem' }}</button>
         </form>
       </div>
     </div>
 
-    <button class="close-visual" (click)="currentVisualResponse = null">Close [ESC]</button>
+    <button class="close-visual" (click)="currentVisualResponse = null">{{ languageService.getCurrentLanguage() === 'en' ? 'Close [ESC]' : 'Fechar [ESC]' }}</button>
   </div>
 
   <!-- Command input area -->
@@ -139,7 +139,7 @@
     <input #commandInput type="text" [(ngModel)]="currentCommand"
            (keydown)="handleKeyDown($event)"
            class="command-input"
-           [placeholder]="'Type a command...'"
+           [placeholder]="languageService.getCurrentLanguage() === 'en' ? 'Type a command...' : 'Digite um comando...'"
            autofocus>
     <span class="terminal-caret"></span>
   </div>
@@ -151,6 +151,7 @@
             class="suggestion-btn">
       {{cmd}}
     </button>
+    <app-language-toggle></app-language-toggle>
   </div>
 
   <!-- Image Modal -->

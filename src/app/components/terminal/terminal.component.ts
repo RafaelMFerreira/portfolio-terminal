@@ -1,6 +1,9 @@
 import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { LanguageToggleComponent } from '../language-toggle/language-toggle.component';
+import { PortfolioService } from '../../services/portfolio.service';
+import { LanguageService } from '../../services/language.service';
 
 export interface TerminalCommand {
   name: string;
@@ -17,7 +20,7 @@ export interface TerminalTheme {
 }
 
 export interface VisualResponse {
-  type: 'project' | 'skills' | 'about' | 'contact' | 'gallery' | 'experience';
+  type: 'project' | 'skills' | 'about' | 'contact' | 'experience';
   data: any;
 }
 
@@ -33,7 +36,7 @@ export interface Project {
 @Component({
   selector: 'app-terminal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LanguageToggleComponent],
   templateUrl: './terminal.component.html',
   styleUrls: ['./terminal.component.css']
 })
@@ -54,7 +57,8 @@ export class TerminalComponent implements OnInit {
   commandHistory: string[] = [];
   historyIndex = -1;
   currentVisualResponse: VisualResponse | null = null;
-  suggestionButtons: string[] = ['projects', 'skills', 'about', 'experience', 'contact'];
+  suggestionButtonsEn: string[] = ['projects', 'skills', 'about', 'experience', 'contact', 'language'];
+  suggestionButtonsPt: string[] = ['projetos', 'habilidades', 'sobre', 'experiência', 'contato', 'language'];
   currentExperienceIndex = 0;
   
   // Image modal properties
@@ -74,21 +78,133 @@ export class TerminalComponent implements OnInit {
 
   currentTheme: TerminalTheme = this.themes[0];
 
-  constructor() {}
+  constructor(
+    private portfolioService: PortfolioService,
+    public languageService: LanguageService
+  ) {}
 
   ngOnInit(): void {
-    if (this.initialMessage) {
-      this.addOutput(this.initialMessage);
+    // Add initial message
+    this.addOutput(this.initialMessage);
+
+    // Subscribe to language changes
+    this.languageService.currentLanguage$.subscribe(() => {
+      // If there's a visual response active, refresh it with the new language
+      if (this.currentVisualResponse) {
+        const type = this.currentVisualResponse.type;
+        switch (type) {
+          case 'project':
+            this.currentVisualResponse.data = this.portfolioService.getProjects();
+            break;
+          case 'skills':
+            this.currentVisualResponse.data = this.portfolioService.getSkills();
+            break;
+          case 'about':
+            this.currentVisualResponse.data = this.portfolioService.getAboutInfo();
+            break;
+          case 'experience':
+            this.currentVisualResponse.data = this.portfolioService.getExperience();
+            break;
+          case 'contact':
+            this.currentVisualResponse.data = this.portfolioService.getContactInfo();
+            break;
+        }
+      }
+    });
+
+    // Set up commands
+    if (this.commands.length === 0) {
+      this.commands = [
+        {
+          name: 'help',
+          description: 'Show available commands',
+          action: () => this.getHelpText()
+        },
+        {
+          name: 'clear',
+          description: 'Clear the terminal',
+          action: () => {
+            this.clearTerminal();
+            return '';
+          }
+        },
+        {
+          name: 'theme',
+          description: 'Change the terminal theme (usage: theme [name])',
+          action: (args) => this.handleThemeCommand(args)
+        },
+        {
+          name: 'projects',
+          description: 'Show my projects',
+          visualMode: true,
+          action: () => {
+            return {
+              type: 'project',
+              data: this.portfolioService.getProjects()
+            };
+          }
+        },
+        {
+          name: 'skills',
+          description: 'Show my skills',
+          visualMode: true,
+          action: () => {
+            return {
+              type: 'skills',
+              data: this.portfolioService.getSkills()
+            };
+          }
+        },
+        {
+          name: 'about',
+          description: 'Show information about me',
+          visualMode: true,
+          action: () => {
+            return {
+              type: 'about',
+              data: this.portfolioService.getAboutInfo()
+            };
+          }
+        },
+        {
+          name: 'experience',
+          description: 'Show my professional experience',
+          visualMode: true,
+          action: () => {
+            return {
+              type: 'experience',
+              data: this.portfolioService.getExperience()
+            };
+          }
+        },
+        {
+          name: 'contact',
+          description: 'Show contact information',
+          visualMode: true,
+          action: () => {
+            return {
+              type: 'contact',
+              data: this.portfolioService.getContactInfo()
+            };
+          }
+        },
+        {
+          name: 'language',
+          description: 'Change the current language (usage: language [en|pt])',
+          action: (args) => this.handleLanguageCommand(args)
+        },
+        {
+          name: 'lang',
+          description: 'Alias for language command',
+          action: (args) => this.handleLanguageCommand(args)
+        }
+      ];
     }
 
-    this.addOutput('Tip: Click on any command button below or type "projects" to view portfolio');
-
-    // Add theme command
-    this.commands.push({
-      name: 'theme',
-      description: 'Change terminal theme. Usage: theme [name] or theme list',
-      action: (args) => this.handleThemeCommand(args)
-    });
+    // Focus the input
+    setTimeout(() => {
+      this.commandInput.nativeElement.focus();
+    }, 0);
 
     // Apply initial theme
     this.applyTheme(this.currentTheme);
@@ -213,52 +329,69 @@ export class TerminalComponent implements OnInit {
         output = '';
       } else if (cmd === 'help') {
         output = this.getHelpText();
+        this.addOutput(output as string);
       } else {
         // Check custom commands
         const command = this.commands.find(c => c.name === cmd);
         if (command) {
           try {
             output = command.action(args);
-
-            // Handle visual response
-            if (typeof output !== 'string') {
-              this.currentVisualResponse = output;
-              this.addOutput(`Displaying ${output.type} information...`);
-              
-              // Reset experience index when showing experience
-              if (output.type === 'experience') {
-                this.currentExperienceIndex = 0;
-              }
-              
-              // Apply current theme to visual response elements after they render
-              setTimeout(() => {
-                this.applyThemeToVisualElements();
-                // Refresh animations for the new visual response
-                this.refreshVisualResponseAnimations();
-              }, 50);
-            } else {
-              this.currentVisualResponse = null;
-            }
+            this.handleCommandOutput(output, commandText);
           } catch (error) {
             output = `Error executing command: ${error}`;
             this.currentVisualResponse = null;
+            this.addOutput(output as string);
           }
+        } else {
+          this.addOutput(output as string);
         }
       }
 
-      if (output && typeof output === 'string') {
-        this.addOutput(output);
-      }
+      this.currentCommand = '';
+      setTimeout(() => this.commandInput.nativeElement.focus(), 0);
+    }
+  }
 
-      this.commandExecuted.emit({command: commandText, output});
+  private handleCommandOutput(output: string | VisualResponse, commandText: string): void {
+    if (typeof output !== 'string') {
+      this.currentVisualResponse = output;
+      this.addOutput(`Displaying ${output.type} information...`);
+      
+      // Reset experience index when showing experience
+      if (output.type === 'experience') {
+        this.currentExperienceIndex = 0;
+      }
+      
+      // Apply current theme to visual response elements after they render
+      setTimeout(() => {
+        this.applyThemeToVisualElements();
+        // Refresh animations for the new visual response
+        this.refreshVisualResponseAnimations();
+      }, 50);
+    } else if (output) {
+      this.currentVisualResponse = null;
+      this.addOutput(output);
     }
 
-    this.currentCommand = '';
-    setTimeout(() => this.commandInput.nativeElement.focus(), 0);
+    this.commandExecuted.emit({command: commandText, output});
   }
 
   executeButtonCommand(command: string): void {
-    this.currentCommand = command;
+    // Map Portuguese commands to English commands
+    let cmdToExecute = command;
+    if (this.languageService.getCurrentLanguage() === 'pt') {
+      const commandMap: {[key: string]: string} = {
+        'projetos': 'projects',
+        'habilidades': 'skills',
+        'sobre': 'about',
+        'experiência': 'experience',
+        'contato': 'contact',
+        'language': 'language'
+      };
+      cmdToExecute = commandMap[command] || command;
+    }
+    
+    this.currentCommand = cmdToExecute;
     this.executeCommand();
   }
 
@@ -286,12 +419,50 @@ export class TerminalComponent implements OnInit {
   }
 
   getHelpText(): string {
-    let helpText = 'Available commands:\n';
-    helpText += '- clear: Clear the terminal\n';
-    helpText += '- help: Display this help message\n';
+    const isEnglish = this.languageService.getCurrentLanguage() === 'en';
+    
+    let helpText = isEnglish ? 'Available commands:\n' : 'Comandos disponíveis:\n';
+    helpText += isEnglish 
+      ? '- clear: Clear the terminal\n' 
+      : '- clear: Limpar o terminal\n';
+    helpText += isEnglish 
+      ? '- help: Display this help message\n' 
+      : '- help: Exibir esta mensagem de ajuda\n';
 
     this.commands.forEach(cmd => {
-      helpText += `- ${cmd.name}: ${cmd.description}\n`;
+      // Skip the lang alias in the help text to avoid duplication
+      if (cmd.name === 'lang') return;
+      
+      let description = cmd.description;
+      
+      // Translate common command descriptions if in Portuguese
+      if (!isEnglish) {
+        switch (cmd.name) {
+          case 'projects':
+            description = 'Mostrar meus projetos';
+            break;
+          case 'skills':
+            description = 'Mostrar minhas habilidades';
+            break;
+          case 'about':
+            description = 'Mostrar informações sobre mim';
+            break;
+          case 'experience':
+            description = 'Mostrar minha experiência profissional';
+            break;
+          case 'contact':
+            description = 'Mostrar informações de contato';
+            break;
+          case 'theme':
+            description = 'Mudar o tema do terminal (uso: theme [nome])';
+            break;
+          case 'language':
+            description = 'Mudar o idioma atual (uso: language [en|pt])';
+            break;
+        }
+      }
+      
+      helpText += `- ${cmd.name}: ${description}\n`;
     });
 
     return helpText;
@@ -332,6 +503,23 @@ export class TerminalComponent implements OnInit {
     }
 
     return `Theme "${themeName}" not found. Use "theme list" to see available themes.`;
+  }
+
+  handleLanguageCommand(args: string[]): string {
+    if (!args.length || args[0] === 'list') {
+      const currentLang = this.languageService.getCurrentLanguage();
+      return `Available languages:\n- en (English) ${currentLang === 'en' ? '[current]' : ''}\n- pt (Português) ${currentLang === 'pt' ? '[current]' : ''}`;
+    }
+
+    const lang = args[0].toLowerCase();
+    if (lang === 'en' || lang === 'pt') {
+      this.languageService.setLanguage(lang);
+      return lang === 'en' 
+        ? 'Language changed to English' 
+        : 'Idioma alterado para Português';
+    }
+
+    return `Language "${args[0]}" not supported. Available options: en, pt`;
   }
 
   applyTheme(theme: TerminalTheme): void {
@@ -384,7 +572,6 @@ export class TerminalComponent implements OnInit {
     document.documentElement.style.setProperty('--terminal-accent-transparent', transparentAccent);
     document.documentElement.style.setProperty('--terminal-border-light', borderLight);
 
-    // Apply theme to modal if visible
     if (this.imageModal.visible) {
       this.applyThemeToModal();
     }
@@ -637,5 +824,9 @@ export class TerminalComponent implements OnInit {
     if (modalClose) {
       (modalClose as HTMLElement).style.color = this.currentTheme.foreground;
     }
+  }
+
+  get suggestionButtons(): string[] {
+    return this.languageService.getCurrentLanguage() === 'en' ? this.suggestionButtonsEn : this.suggestionButtonsPt;
   }
 }

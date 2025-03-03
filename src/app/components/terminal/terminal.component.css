@@ -408,7 +408,7 @@
   border-top: 1px solid var(--terminal-border-light);
 }
 
-.suggestion-btn {
+.suggestion-btn, ::ng-deep .language-toggle-btn {
   background-color: transparent;
   border: 1px solid var(--terminal-accent);
   color: var(--terminal-fg);
@@ -430,7 +430,7 @@
   gap: 8px;
 }
 
-.suggestion-btn::before {
+.suggestion-btn::before, ::ng-deep .language-toggle-btn::before {
   content: '';
   position: absolute;
   top: 0;
@@ -446,18 +446,18 @@
   transition: left 0.5s ease;
 }
 
-.suggestion-btn:hover {
+.suggestion-btn:hover, ::ng-deep .language-toggle-btn:hover {
   background-color: var(--terminal-accent);
   color: var(--terminal-bg);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px var(--terminal-accent-transparent);
 }
 
-.suggestion-btn:hover::before {
+.suggestion-btn:hover::before, ::ng-deep .language-toggle-btn:hover::before {
   left: 100%;
 }
 
-.suggestion-btn:active {
+.suggestion-btn:active, ::ng-deep .language-toggle-btn:active {
   transform: translateY(0);
   box-shadow: 0 2px 4px var(--terminal-accent-transparent);
 }
