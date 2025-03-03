@@ -1,7 +1,6 @@
 import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { LanguageToggleComponent } from '../language-toggle/language-toggle.component';
 import { PortfolioService } from '../../services/portfolio.service';
 import { LanguageService } from '../../services/language.service';
 
@@ -36,7 +35,7 @@ export interface Project {
 @Component({
   selector: 'app-terminal',
   standalone: true,
-  imports: [CommonModule, FormsModule, LanguageToggleComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './terminal.component.html',
   styleUrls: ['./terminal.component.css']
 })
@@ -81,16 +80,7 @@ export class TerminalComponent implements OnInit {
   constructor(
     private portfolioService: PortfolioService,
     public languageService: LanguageService
-  ) {
-    // Load saved theme from localStorage if it exists
-    const savedTheme = localStorage.getItem('terminal-theme');
-    if (savedTheme) {
-      const theme = this.themes.find(t => t.name === savedTheme);
-      if (theme) {
-        this.currentTheme = theme;
-      }
-    }
-  }
+  ) {  }
 
   ngOnInit(): void {
     // Add initial message
@@ -145,22 +135,17 @@ export class TerminalComponent implements OnInit {
       this.commandInput.nativeElement.focus();
     }, 0);
 
+    // Load saved theme from localStorage if it exists
+    const savedTheme = localStorage.getItem('terminal-theme');
+    if (savedTheme) {
+      const theme = this.themes.find(t => t.name === savedTheme);
+      if (theme) {
+        this.currentTheme = theme;
+      }
+    }
+
     // Apply initial theme
     this.applyTheme(this.currentTheme);
-    
-    // Set initial CSS variables
-    document.documentElement.style.setProperty('--terminal-bg', this.currentTheme.background);
-    document.documentElement.style.setProperty('--terminal-fg', this.currentTheme.foreground);
-    document.documentElement.style.setProperty('--terminal-font', this.currentTheme.fontFamily);
-    document.documentElement.style.setProperty('--terminal-accent', this.currentTheme.foreground);
-    document.documentElement.style.setProperty('--terminal-accent-hover', this.adjustColor(this.currentTheme.foreground, 20));
-    document.documentElement.style.setProperty('--terminal-input-bg', this.adjustColor(this.currentTheme.background, 20));
-    
-    // Set transparent accent colors
-    const transparentAccent = this.createTransparentColor(this.currentTheme.foreground, 0.2);
-    const borderLight = this.createTransparentColor(this.currentTheme.foreground, 0.3);
-    document.documentElement.style.setProperty('--terminal-accent-transparent', transparentAccent);
-    document.documentElement.style.setProperty('--terminal-border-light', borderLight);
 
     this.commandInput.nativeElement.addEventListener('focus', () => {
       this.updateCaretPosition();
@@ -301,7 +286,6 @@ export class TerminalComponent implements OnInit {
       
       // Apply current theme to visual response elements after they render
       setTimeout(() => {
-        this.applyThemeToVisualElements();
         // Refresh animations for the new visual response
         this.refreshVisualResponseAnimations();
         // Ensure terminal is scrolled to bottom after visual response renders
@@ -313,6 +297,7 @@ export class TerminalComponent implements OnInit {
     }
 
     this.commandExecuted.emit({command: commandText, output});
+    console.log("teste2", this.currentTheme.name)
   }
 
   executeButtonCommand(command: string): void {
@@ -337,6 +322,7 @@ export class TerminalComponent implements OnInit {
     } 
     // Special handling for theme button
     else if (cmdToExecute === 'theme') {
+      console.log("teste3", this.currentTheme.name)
       const currentThemeIndex = this.themes.findIndex(t => t.name === this.currentTheme.name);
       const nextThemeIndex = (currentThemeIndex + 1) % this.themes.length;
       this.currentCommand = `theme ${this.themes[nextThemeIndex].name}`;
@@ -425,7 +411,7 @@ export class TerminalComponent implements OnInit {
     if (!args.length || args[0] === 'list') {
       return 'Available themes:\n' + this.themes.map(t => `- ${t.name}`).join('\n');
     }
-
+    
     const themeName = args[0];
     const theme = this.themes.find(t => t.name === themeName);
 
@@ -439,33 +425,19 @@ export class TerminalComponent implements OnInit {
       // Save theme preference to localStorage
       localStorage.setItem('terminal-theme', theme.name);
       
-      // Update CSS variables when theme changes
-      document.documentElement.style.setProperty('--terminal-bg', theme.background);
-      document.documentElement.style.setProperty('--terminal-fg', theme.foreground);
-      document.documentElement.style.setProperty('--terminal-font', theme.fontFamily);
-      document.documentElement.style.setProperty('--terminal-accent', theme.foreground);
-      document.documentElement.style.setProperty('--terminal-accent-hover', this.adjustColor(theme.foreground, 20));
-      document.documentElement.style.setProperty('--terminal-input-bg', this.adjustColor(theme.background, 20));
-      
-      // Update transparent accent colors
-      const transparentAccent = this.createTransparentColor(theme.foreground, 0.2);
-      const borderLight = this.createTransparentColor(theme.foreground, 0.3);
-      document.documentElement.style.setProperty('--terminal-accent-transparent', transparentAccent);
-      document.documentElement.style.setProperty('--terminal-border-light', borderLight);
-      
       // If there was a visual response, restore it after theme change
       if (currentResponse) {
         setTimeout(() => {
           this.currentVisualResponse = currentResponse;
-          this.applyThemeToVisualElements();
-          this.scrollToBottom();
+            this.scrollToBottom();
         }, 50);
       }
       
       this.themeChanged.emit(theme);
+      console.log("teste1",  this.currentTheme.name)
       return `Theme changed to ${theme.name}`;
     }
-    
+
     this.scrollToBottom();
     return `Theme "${themeName}" not found. Use "theme list" to see available themes.`;
   }
@@ -488,8 +460,7 @@ export class TerminalComponent implements OnInit {
       if (currentResponse) {
         setTimeout(() => {
           this.currentVisualResponse = currentResponse;
-          this.applyThemeToVisualElements();
-          this.scrollToBottom();  
+            this.scrollToBottom();  
         }, 50);
       }
     
@@ -506,42 +477,6 @@ export class TerminalComponent implements OnInit {
   }
 
   applyTheme(theme: TerminalTheme): void {
-    const container = this.terminalContainer.nativeElement;
-    const input = this.commandInput.nativeElement;
-
-    // Apply theme to main container
-    container.style.backgroundColor = theme.background;
-    container.style.color = theme.foreground;
-    container.style.fontFamily = theme.fontFamily;
-
-    // Apply theme to input
-    input.style.color = theme.foreground;
-    input.style.fontFamily = theme.fontFamily;
-    input.style.caretColor = 'transparent';
-    
-    // Apply theme to visual response areas
-    const visualResponseAreas = container.querySelectorAll('.visual-response-area, .project-card, .skills-display, .about-section, .contact-form');
-    visualResponseAreas.forEach((element: HTMLElement) => {
-      element.style.backgroundColor = theme.background;
-      element.style.color = theme.foreground;
-      element.style.fontFamily = theme.fontFamily;
-    });
-    
-    // Apply theme to buttons
-    const buttons = container.querySelectorAll('.suggestion-btn, .close-visual, .form-button');
-    buttons.forEach((button: HTMLElement) => {
-      button.style.fontFamily = theme.fontFamily;
-    });
-    
-    // Apply theme to input fields
-    const inputFields = container.querySelectorAll('.form-input, .form-textarea');
-    inputFields.forEach((field: HTMLElement) => {
-      field.style.backgroundColor = this.adjustColor(theme.background, 20);
-      field.style.color = theme.foreground;
-      field.style.fontFamily = theme.fontFamily;
-    });
-    
-    // Update CSS variables for consistent theming
     document.documentElement.style.setProperty('--terminal-bg', theme.background);
     document.documentElement.style.setProperty('--terminal-fg', theme.foreground);
     document.documentElement.style.setProperty('--terminal-font', theme.fontFamily);
@@ -555,9 +490,11 @@ export class TerminalComponent implements OnInit {
     document.documentElement.style.setProperty('--terminal-accent-transparent', transparentAccent);
     document.documentElement.style.setProperty('--terminal-border-light', borderLight);
 
-    if (this.imageModal.visible) {
-      this.applyThemeToModal();
-    }
+    // Force a style recalculation by accessing offsetHeight
+    document.documentElement.offsetHeight;
+    const input = this.commandInput.nativeElement;
+    input.style.caretColor = 'transparent';
+
   }
   
   // Helper function to adjust color brightness
@@ -601,75 +538,6 @@ export class TerminalComponent implements OnInit {
     b = Math.max(0, Math.min(255, b + amount));
     
     return `rgba(${r}, ${g}, ${b}, ${a})`;
-  }
-
-  // Helper method to apply theme to visual elements after they appear
-  private applyThemeToVisualElements(): void {
-    if (!this.currentVisualResponse) return;
-    
-    const container = this.terminalContainer.nativeElement;
-    
-    // Apply theme to visual response areas
-    const visualResponseAreas = container.querySelectorAll('.visual-response-area, .project-card, .skills-display, .about-section, .contact-form, .experience-section');
-    visualResponseAreas.forEach((element: HTMLElement) => {
-      element.style.backgroundColor = this.currentTheme.background;
-      element.style.color = this.currentTheme.foreground;
-      element.style.fontFamily = this.currentTheme.fontFamily;
-    });
-    
-    // Apply theme to buttons
-    const buttons = container.querySelectorAll('.suggestion-btn, .close-visual, .form-button, .carousel-nav, .indicator');
-    buttons.forEach((button: HTMLElement) => {
-      button.style.fontFamily = this.currentTheme.fontFamily;
-      if (button.classList.contains('carousel-nav') || button.classList.contains('indicator')) {
-        button.style.borderColor = this.currentTheme.foreground;
-      }
-    });
-    
-    // Apply theme to input fields
-    const inputFields = container.querySelectorAll('.form-input, .form-textarea');
-    inputFields.forEach((field: HTMLElement) => {
-      field.style.backgroundColor = this.adjustColor(this.currentTheme.background, 20);
-      field.style.color = this.currentTheme.foreground;
-      field.style.fontFamily = this.currentTheme.fontFamily;
-    });
-    
-    // Apply theme to tech tags
-    const techTags = container.querySelectorAll('.tech-tag');
-    const transparentAccent = this.createTransparentColor(this.currentTheme.foreground, 0.2);
-    techTags.forEach((tag: HTMLElement) => {
-      tag.style.backgroundColor = transparentAccent;
-      tag.style.borderColor = this.currentTheme.foreground;
-      tag.style.color = this.currentTheme.foreground;
-    });
-    
-    // Apply theme to skill bars
-    const skillFills = container.querySelectorAll('.skill-fill');
-    skillFills.forEach((fill: HTMLElement) => {
-      fill.style.backgroundColor = this.currentTheme.foreground;
-    });
-    
-    // Apply theme to card borders and shadows
-    const cards = container.querySelectorAll('.card, .experience-card');
-    cards.forEach((card: HTMLElement) => {
-      card.style.borderColor = this.currentTheme.foreground;
-    });
-    
-    // Apply theme to experience elements
-    const experienceHeaders = container.querySelectorAll('.experience-header h3');
-    experienceHeaders.forEach((header: HTMLElement) => {
-      header.style.color = this.currentTheme.foreground;
-    });
-    
-    // Apply theme to navigation tip
-    const navigationTips = container.querySelectorAll('.navigation-tip kbd');
-    navigationTips.forEach((tip: HTMLElement) => {
-      tip.style.borderColor = this.currentTheme.foreground;
-    });
-
-    if (this.imageModal.visible) {
-      this.applyThemeToModal();
-    }
   }
 
   // Helper method to create transparent colors
@@ -777,36 +645,10 @@ export class TerminalComponent implements OnInit {
       title
     };
     
-    this.applyThemeToModal();
   }
 
   closeImageModal(): void {
     this.imageModal.visible = false;
-  }
-
-  // Apply theme to modal
-  private applyThemeToModal(): void {
-    if (!this.imageModal.visible) return;
-    
-    const modal = document.querySelector('.image-modal');
-    if (!modal) return;
-    
-    const modalContent = modal.querySelector('.modal-content');
-    const modalTitle = modal.querySelector('.modal-title');
-    const modalClose = modal.querySelector('.modal-close');
-    
-    if (modalContent) {
-      (modalContent as HTMLElement).style.backgroundColor = this.currentTheme.background;
-      (modalContent as HTMLElement).style.borderColor = this.currentTheme.foreground;
-    }
-    
-    if (modalTitle) {
-      (modalTitle as HTMLElement).style.color = this.currentTheme.foreground;
-    }
-    
-    if (modalClose) {
-      (modalClose as HTMLElement).style.color = this.currentTheme.foreground;
-    }
   }
 
   get suggestionButtons(): string[] {

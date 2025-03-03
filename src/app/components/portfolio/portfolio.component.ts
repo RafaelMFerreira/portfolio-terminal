@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { TerminalComponent } from '../terminal/terminal.component';
 import { TerminalService } from '../../services/terminal.service';
 import { PortfolioService } from '../../services/portfolio.service';
+import { TerminalTheme } from '../terminal/terminal.component';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-portfolio',
@@ -25,6 +27,14 @@ export class PortfolioComponent implements OnInit {
   nameText = 'Rafael Miranda Ferreira';
   bootLog = '';
   isShutdown = false;
+
+  // Theme settings
+  currentTheme: TerminalTheme = {
+    name: 'matrix',
+    background: '#000',
+    foreground: '#0f0',
+    fontFamily: 'Courier New, monospace'
+  };
 
   // Terminal settings
   terminalPrompt = 'visitor@rmf:~$';
@@ -51,9 +61,38 @@ export class PortfolioComponent implements OnInit {
     private portfolioService: PortfolioService
   ) {
     this.initPortfolioCommands();
+    this.applyStoredTheme();
+  }
+
+  private applyStoredTheme(){
+    // Load saved theme from localStorage if it exists
+    const savedTheme = localStorage.getItem('terminal-theme');
+    if (savedTheme) {
+      const themes = [
+        { name: 'matrix', background: '#000', foreground: '#0f0', fontFamily: 'Courier New, monospace' },
+        { name: 'classic', background: '#000', foreground: '#fff', fontFamily: 'Courier New, monospace' },
+        { name: 'amber', background: '#000', foreground: '#ffb000', fontFamily: 'Courier New, monospace' },
+        { name: 'blue', background: '#000', foreground: '#00bfff', fontFamily: 'Courier New, monospace' },
+        { name: 'ubuntu', background: '#300a24', foreground: '#fff', fontFamily: 'Ubuntu Mono, monospace' }
+      ];
+      const theme = themes.find(t => t.name === savedTheme);
+      if (theme) {
+        this.currentTheme = theme;
+      }
+    }
   }
 
   private initPortfolioCommands(): void {
+    // Add reboot command
+    this.terminalService.addCommand({
+      name: 'reboot',
+      description: 'Restart the system and show boot animation',
+      action: () => {
+        this.restartSystem();
+        return 'Rebooting system...';
+      }
+    });
+
     // Portfolio specific commands
     this.terminalService.addCommand({
       name: 'projects',
@@ -158,13 +197,17 @@ export class PortfolioComponent implements OnInit {
   }
 
   async startIntroSequence(): Promise<void> {
-    await this.sleep(2200);
+    // Apply theme colors to container
+    document.documentElement.style.setProperty('--portfolio-bg', this.currentTheme.background);
+    document.documentElement.style.setProperty('--portfolio-fg', this.currentTheme.foreground);
+    document.documentElement.style.setProperty('--portfolio-font', this.currentTheme.fontFamily);
+    
+    await this.sleep(environment.bootSequence.initialDelay);
     await this.glitchName();
     await this.startBootSequence();
 
     if (!this.helpShown) {
       setTimeout(() => {
-        // Automatically show help after 3 econds
         this.onCommandExecuted({command: 'help', output: ''});
         this.helpShown = true;
       }, 3000);
@@ -172,6 +215,20 @@ export class PortfolioComponent implements OnInit {
   }
 
   async glitchName(): Promise<void> {
+    const glitchColors = {
+      matrix: { primary: '#ff00c1', secondary: '#00fff9' },
+      classic: { primary: '#ff0000', secondary: '#0000ff' },
+      amber: { primary: '#ff8000', secondary: '#ffff00' },
+      blue: { primary: '#00ffff', secondary: '#0080ff' },
+      ubuntu: { primary: '#ff4444', secondary: '#00ffff' }
+    };
+
+    const colors = glitchColors[this.currentTheme.name as keyof typeof glitchColors] || glitchColors.matrix;
+
+    //Update glitch effect colors
+    document.documentElement.style.setProperty('--glitch-color-1', colors.primary);
+    document.documentElement.style.setProperty('--glitch-color-2', colors.secondary);
+
     const stages = [
       { text: "R4fa3l M1r4nda F3rr31ra", duration: 900 },
       { text: "Rafael Mir#nda Ferr&!ra", duration: 700 },
@@ -203,12 +260,12 @@ export class PortfolioComponent implements OnInit {
 
     // Display boot messages
     for (const message of this.bootMessages) {
-      await this.typeText(message);
-      await this.sleep(100);
+      await this.typeText(message, environment.bootSequence.typingSpeed);
+      await this.sleep(environment.bootSequence.messageDelay);
     }
 
     // Wait before showing terminal
-    await this.sleep(1000);
+    await this.sleep(environment.bootSequence.finalDelay);
 
     // Hide boot screen and show terminal
     this.showBootScreen = false;
@@ -236,5 +293,28 @@ export class PortfolioComponent implements OnInit {
         this.isShutdown = false;
       }, 3000);
     }
+  }
+
+  async restartSystem(): Promise<void> {
+    
+    // Reset state
+    this.showTerminal = false;
+    this.showBootScreen = false;
+    this.showIntro = true;
+    this.nameOpacity = 1;
+    this.nameText = 'Rafael Miranda Ferreira';
+    this.bootLog = '';
+    this.helpShown = false;
+
+    //debug
+    this.sleep(1000);
+    //this.showTerminal = true;
+    //this.nameOpacity = 0;
+    //return
+    
+    // Apply theme in case of changes
+    this.applyStoredTheme();
+    // Start the sequence again
+    await this.startIntroSequence();
   }
 }
