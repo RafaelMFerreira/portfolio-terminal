@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { LanguageService, Language } from './language.service';
+import { LanguageService } from './language.service';
 
 export interface Project {
   id: string;
@@ -281,15 +281,15 @@ export class PortfolioService {
   private aboutInfoEn: AboutInfo = {
     name: 'Rafael Miranda Ferreira',
     title: 'Full-Stack Developer',
-    bio: 'I am a developer passionate about technology and problem-solving. Graduated in Computer Science from Mackenzie Presbyterian University (2020-2024), I currently work as a Mid-level Developer at SERGET Mobilidade Viária. Always seeking innovation, I am passionate about artificial intelligence and process optimization.',
+    bio: 'I am a developer passionate about technology and problem-solving. Graduated in Computer Science from Mackenzie Presbyterian University (2020-2024), I currently work as a Mid-level Developer at SERGET Mobilidade Viária. Always seeking innovation, I have a strong interest in artificial intelligence and process optimization.',
     photo: `${this.baseUrl}/assets/images/profile.jfif` //TODO: Better photo
   };
 
   private aboutInfoPt: AboutInfo = {
     name: 'Rafael Miranda',
-    title: 'Desenvolvedor Full Stack',
-    bio: 'Sou um desenvolvedor full stack apaixonado por criar soluções web elegantes e eficientes. Com mais de 5 anos de experiência em desenvolvimento web, especializo-me em tecnologias modernas como Angular, React, Node.js e .NET Core. Adoro resolver problemas complexos e aprender novas tecnologias.',
-    photo: `${this.baseUrl}/assets/images/profile.jfif`
+    title: 'Desenvolvedor Full-Stack',
+    bio: 'Sou um desenvolvedor apaixonado por tecnologia e resolução de problemas. Graduado em Ciência da Computação pela Universidade Presbiteriana Mackenzie (2020-2024), atualmente trabalho como Desenvolvedor Pleno na SERGET Mobilidade Viária. Sempre buscando inovação, tenho grande interesse em inteligência artificial e otimização de processos.',
+    photo: `${this.baseUrl}/assets/images/profile.jfif` //TODO: Better photo
   };
 
   //TODO: Actually enable the form to send e-mails
