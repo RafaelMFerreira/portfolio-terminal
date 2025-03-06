@@ -71,6 +71,8 @@ export class PortfolioComponent implements OnInit {
       if (theme) {
         this.currentTheme = theme;
       }
+    } else {
+      this.currentTheme = this.themes[0];
     }
   }
 

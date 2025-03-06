@@ -4,5 +4,5 @@ export interface TerminalTheme {
     foreground: string;
     promptColor: string;
     fontFamily: string;
-  }
+}
   
