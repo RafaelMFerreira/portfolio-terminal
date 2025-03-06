@@ -354,12 +354,13 @@ export class TerminalComponent implements OnInit {
       
       debugger
       if (match && match.length >= 3) {
-        console.log("teste")
         const promptPart = match[1];
         const commandPart = match[2];
         
         // Create HTML with different styling for prompt and command
-        element.innerHTML = `<span style="color:${this.currentTheme.promptColor}" "class="history-prompt">${promptPart}</span> ${commandPart.replace(/\n/g, '<br>')}`;
+        // For some reason the class "history-prompt" color in css is not applying
+        // So apply the color directly on it
+        element.innerHTML = `<span style="color: var(--terminal-prompt-color)" "class="history-prompt">${promptPart}</span> ${commandPart.replace(/\n/g, '<br>')}`;
       } else {
         // Fallback if regex doesn't match
         element.innerHTML = text.replace(/\n/g, '<br>');
