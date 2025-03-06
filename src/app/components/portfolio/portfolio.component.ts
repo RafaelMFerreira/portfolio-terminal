@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import { TerminalComponent } from '../terminal/terminal.component';
 import { TerminalService } from '../../services/terminal.service';
 import { PortfolioService } from '../../services/portfolio.service';
-import { TerminalTheme } from '../terminal/terminal.component';
+import { TerminalTheme } from '../../models/theme';
 import { environment } from '../../../environments/environment';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-portfolio',
@@ -29,13 +30,9 @@ export class PortfolioComponent implements OnInit {
   isShutdown = false;
 
   // Theme settings
-  currentTheme: TerminalTheme = {
-    name: 'matrix',
-    background: '#000',
-    foreground: '#0f0',
-    fontFamily: 'Courier New, monospace'
-  };
-
+  themes: TerminalTheme[] = [];
+  currentTheme!: TerminalTheme;
+  
   // Terminal settings
   terminalPrompt = 'visitor@rmf:~$';
   terminalInitialMessage = 'Terminal Recovery Mode [Version 1.0]\nType \'help\' for available commands.';
@@ -58,9 +55,11 @@ export class PortfolioComponent implements OnInit {
 
   constructor(
     private terminalService: TerminalService,
-    private portfolioService: PortfolioService
+    private portfolioService: PortfolioService,
+    private themeService: ThemeService
   ) {
     this.initPortfolioCommands();
+    this.themes = this.themeService.getThemes();
     this.applyStoredTheme();
   }
 
@@ -68,14 +67,7 @@ export class PortfolioComponent implements OnInit {
     // Load saved theme from localStorage if it exists
     const savedTheme = localStorage.getItem('terminal-theme');
     if (savedTheme) {
-      const themes = [
-        { name: 'matrix', background: '#000', foreground: '#0f0', fontFamily: 'Courier New, monospace' },
-        { name: 'classic', background: '#000', foreground: '#fff', fontFamily: 'Courier New, monospace' },
-        { name: 'amber', background: '#000', foreground: '#ffb000', fontFamily: 'Courier New, monospace' },
-        { name: 'blue', background: '#000', foreground: '#00bfff', fontFamily: 'Courier New, monospace' },
-        { name: 'ubuntu', background: '#300a24', foreground: '#fff', fontFamily: 'Ubuntu Mono, monospace' }
-      ];
-      const theme = themes.find(t => t.name === savedTheme);
+      const theme = this.themes.find(t => t.name === savedTheme);
       if (theme) {
         this.currentTheme = theme;
       }

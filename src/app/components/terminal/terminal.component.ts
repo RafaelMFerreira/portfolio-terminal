@@ -3,19 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PortfolioService } from '../../services/portfolio.service';
 import { LanguageService } from '../../services/language.service';
+import { TerminalTheme } from '../../models/theme';
+import { ThemeService } from '../../services/theme.service';
 
 export interface TerminalCommand {
   name: string;
   description: string;
   action: (args: string[]) => string | VisualResponse;
   visualMode?: boolean;
-}
-
-export interface TerminalTheme {
-  name: string;
-  background: string;
-  foreground: string;
-  fontFamily: string;
 }
 
 export interface VisualResponse {
@@ -67,22 +62,31 @@ export class TerminalComponent implements OnInit {
     title: ''
   };
 
-  themes: TerminalTheme[] = [
-    { name: 'matrix', background: '#000', foreground: '#0f0', fontFamily: 'Courier New, monospace' },
-    { name: 'classic', background: '#000', foreground: '#fff', fontFamily: 'Courier New, monospace' },
-    { name: 'amber', background: '#000', foreground: '#ffb000', fontFamily: 'Courier New, monospace' },
-    { name: 'blue', background: '#000', foreground: '#00bfff', fontFamily: 'Courier New, monospace' },
-    { name: 'ubuntu', background: '#300a24', foreground: '#fff', fontFamily: 'Ubuntu Mono, monospace' }
-  ];
-
-  currentTheme: TerminalTheme = this.themes[0];
+  themes: TerminalTheme[] = [];
+  currentTheme!: TerminalTheme;
 
   constructor(
     private portfolioService: PortfolioService,
-    public languageService: LanguageService
+    public languageService: LanguageService,
+    public themeService: ThemeService
   ) {  }
 
   ngOnInit(): void {
+    this.themes = this.themeService.getThemes();
+    this.currentTheme = this.themes[0];
+  
+    // Load saved theme from localStorage if it exists
+    const savedTheme = localStorage.getItem('terminal-theme');
+    if (savedTheme) {
+      const theme = this.themes.find(t => t.name === savedTheme);
+      if (theme) {
+        this.currentTheme = theme;
+      }
+    }
+
+    // Apply initial theme
+    this.applyTheme(this.currentTheme);
+
     // Add initial message
     this.addOutput(this.initialMessage);
 
@@ -134,18 +138,6 @@ export class TerminalComponent implements OnInit {
     setTimeout(() => {
       this.commandInput.nativeElement.focus();
     }, 0);
-
-    // Load saved theme from localStorage if it exists
-    const savedTheme = localStorage.getItem('terminal-theme');
-    if (savedTheme) {
-      const theme = this.themes.find(t => t.name === savedTheme);
-      if (theme) {
-        this.currentTheme = theme;
-      }
-    }
-
-    // Apply initial theme
-    this.applyTheme(this.currentTheme);
 
     this.commandInput.nativeElement.addEventListener('focus', () => {
       this.updateCaretPosition();
@@ -297,7 +289,6 @@ export class TerminalComponent implements OnInit {
     }
 
     this.commandExecuted.emit({command: commandText, output});
-    console.log("teste2", this.currentTheme.name)
   }
 
   executeButtonCommand(command: string): void {
@@ -322,7 +313,6 @@ export class TerminalComponent implements OnInit {
     } 
     // Special handling for theme button
     else if (cmdToExecute === 'theme') {
-      console.log("teste3", this.currentTheme.name)
       const currentThemeIndex = this.themes.findIndex(t => t.name === this.currentTheme.name);
       const nextThemeIndex = (currentThemeIndex + 1) % this.themes.length;
       this.currentCommand = `theme ${this.themes[nextThemeIndex].name}`;
@@ -352,7 +342,33 @@ export class TerminalComponent implements OnInit {
   addOutput(text: string, className: string = ''): void {
     const element = document.createElement('div');
     element.className = className;
-    element.innerHTML = text.replace(/\n/g, '<br>');
+    
+    // Special handling for command history to color the prompt differently
+    if (className === 'command-history') {
+      // Extract the prompt portion and the command portion
+      const escapedPrompt = this.prompt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
+      // Create a regex that will match the prompt followed by a space and then the command
+      const promptRegex = new RegExp(`^(${escapedPrompt})\\s+(.*)$`);
+      const match = text.match(promptRegex);
+      
+      debugger
+      if (match && match.length >= 3) {
+        console.log("teste")
+        const promptPart = match[1];
+        const commandPart = match[2];
+        
+        // Create HTML with different styling for prompt and command
+        element.innerHTML = `<span style="color:${this.currentTheme.promptColor}" "class="history-prompt">${promptPart}</span> ${commandPart.replace(/\n/g, '<br>')}`;
+      } else {
+        // Fallback if regex doesn't match
+        element.innerHTML = text.replace(/\n/g, '<br>');
+      }
+    } else {
+      // Normal output without special formatting
+      element.innerHTML = text.replace(/\n/g, '<br>');
+    }
+    
     this.terminalOutput.nativeElement.appendChild(element);
     this.scrollToBottom();
   }
@@ -434,7 +450,6 @@ export class TerminalComponent implements OnInit {
       }
       
       this.themeChanged.emit(theme);
-      console.log("teste1",  this.currentTheme.name)
       return `Theme changed to ${theme.name}`;
     }
 
@@ -483,6 +498,7 @@ export class TerminalComponent implements OnInit {
     document.documentElement.style.setProperty('--terminal-accent', theme.foreground);
     document.documentElement.style.setProperty('--terminal-accent-hover', this.adjustColor(theme.foreground, 20));
     document.documentElement.style.setProperty('--terminal-input-bg', this.adjustColor(theme.background, 20));
+    document.documentElement.style.setProperty('--terminal-prompt-color', theme.promptColor);
     
     // Update transparent accent colors
     const transparentAccent = this.createTransparentColor(theme.foreground, 0.2);

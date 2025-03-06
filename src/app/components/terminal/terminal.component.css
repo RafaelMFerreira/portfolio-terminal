@@ -8,6 +8,7 @@
   --terminal-input-bg: rgba(0, 0, 0, 0.5);
   --terminal-accent-transparent: rgba(0, 255, 0, 0.2);
   --terminal-border-light: rgba(0, 255, 0, 0.3);
+  --terminal-prompt-color: rgba(0, 255, 0, 0.2);
 }
 
 .terminal-container {
@@ -48,6 +49,7 @@
 }
 
 .prompt {
+  color: var(--terminal-prompt-color);
   margin-right: 8px;
   white-space: nowrap;
 }
@@ -60,6 +62,7 @@
   color: inherit;
   font-family: inherit;
   font-size: 1rem;
+  color: var(--terminal-fg)
 }
 
 /* Custom terminal caret */
@@ -100,6 +103,11 @@
   background-size: 100% 2px, 3px 100%;
   pointer-events: none;
   z-index: 2;
+}
+
+.history-prompt {
+  color: var(--terminal-prompt-color) !important;
+  font-weight: bold;
 }
 
 .command-history {
@@ -172,6 +180,10 @@
   padding: 15px;
 }
 
+.card-content h3 {
+  color: var(--terminal-prompt-color)
+}
+
 .tech-tags {
   display: flex;
   flex-wrap: wrap;
@@ -234,6 +246,7 @@
 }
 
 .skill-category {
+  color: var(--terminal-prompt-color);
   animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   opacity: 0;
 }
