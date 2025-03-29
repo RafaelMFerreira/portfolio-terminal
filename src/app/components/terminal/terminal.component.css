@@ -85,6 +85,7 @@
   position: relative;
 }
 
+/* Caret blinking animation */
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
@@ -114,7 +115,7 @@
   opacity: 0.4;
 }
 
-/* Visual Response Area */
+/* Visual Response Area Base Styles */
 .visual-response-area {
   background-color: var(--terminal-bg);
   border: 1px solid var(--terminal-accent);
@@ -136,7 +137,7 @@
   }
 }
 
-/* Project Cards */
+/* Project Card Specific Styles */
 .project-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -153,6 +154,7 @@
   opacity: 0;
 }
 
+/* Staggered animation for project cards */
 .project-item:nth-child(1) .card { animation-delay: 0.1s; }
 .project-item:nth-child(2) .card { animation-delay: 0.2s; }
 .project-item:nth-child(3) .card { animation-delay: 0.3s; }
@@ -207,6 +209,7 @@
   background-color: var(--terminal-accent-transparent);
 }
 
+/* Staggered animation for tech tags */
 .tech-tags .tech-tag:nth-child(1) { animation-delay: 0.5s; }
 .tech-tags .tech-tag:nth-child(2) { animation-delay: 0.55s; }
 .tech-tags .tech-tag:nth-child(3) { animation-delay: 0.6s; }
@@ -237,7 +240,7 @@
   background-color: var(--terminal-accent-hover);
 }
 
-/* Skills Display */
+/* Skills Display Specific Styles */
 .skills-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -251,6 +254,7 @@
   opacity: 0;
 }
 
+/* Staggered animation for skill categories */
 .skill-category:nth-child(1) { animation-delay: 0.1s; }
 .skill-category:nth-child(2) { animation-delay: 0.2s; }
 .skill-category:nth-child(3) { animation-delay: 0.3s; }
@@ -261,32 +265,29 @@
   margin-bottom: 15px;
 }
 
-/* Style the container for skill items (icons) */
 .skill-items {
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
 }
 
-/* Add styles for the icon container */
 .skill-icon-container {
   display: flex;
   flex-direction: column; 
   justify-content: flex-start; 
   align-items: center;
-  padding: 10px; /* Add padding back for spacing on hover */
+  padding: 10px; 
   min-width: 70px; 
   text-align: center; 
-  border: 1px solid transparent; /* Transparent border initially to prevent layout shift */
+  border: 1px solid transparent;
   border-radius: 4px; 
-  background-color: transparent; /* Explicitly transparent */
+  background-color: transparent;
   animation: fadeInRight 0.5s ease forwards;
   opacity: 0;
-  /* Include background-color and border-color in transition */
   transition: transform 0.3s ease, background-color 0.3s ease, border-color 0.3s ease; 
 }
 
-/* Stagger animation for icon containers */
+/* Staggered animation for skill icons */
 .skill-items .skill-icon-container:nth-child(1) { animation-delay: 0.1s; }
 .skill-items .skill-icon-container:nth-child(2) { animation-delay: 0.15s; }
 .skill-items .skill-icon-container:nth-child(3) { animation-delay: 0.2s; }
@@ -295,16 +296,13 @@
 .skill-items .skill-icon-container:nth-child(6) { animation-delay: 0.35s; }
 .skill-items .skill-icon-container:nth-child(7) { animation-delay: 0.4s; }
 .skill-items .skill-icon-container:nth-child(8) { animation-delay: 0.45s; }
-/* Add more if needed */
 
 .skill-icon-container:hover {
   transform: translateY(-3px); 
-  /* Add background and border color back on hover */
   border-color: var(--terminal-accent); 
   background-color: var(--terminal-accent); 
 }
 
-/* Style the icon (<i> tag) itself */
 .skill-icon {
   font-size: 2.8em; 
   color: var(--terminal-fg); 
@@ -313,21 +311,18 @@
 }
 
 .skill-icon-container:hover .skill-icon {
-  /* Keep color change for contrast */
   color: var(--terminal-bg); 
 }
 
-/* Add styles for the skill name span */
 .skill-name {
   display: block; 
   font-size: 0.8rem; 
   color: var(--terminal-fg);
   opacity: 0.8; 
-  transition: color 0.3s ease, opacity 0.3s ease; /* Add opacity transition */
+  transition: color 0.3s ease, opacity 0.3s ease; 
 }
 
 .skill-icon-container:hover .skill-name {
-  /* Keep color change for contrast */
   color: var(--terminal-bg); 
   opacity: 1; 
 }
@@ -343,7 +338,7 @@
   }
 }
 
-/* About Section */
+/* About Section Specific Styles */
 .about-content {
   display: flex;
   gap: 20px;
@@ -375,6 +370,7 @@
   opacity: 0;
 }
 
+/* Staggered animation for about text */
 .about-text h2 { animation-delay: 0.2s; }
 .about-text h3 { animation-delay: 0.3s; }
 
@@ -395,7 +391,7 @@
   }
 }
 
-/* Contact Form */
+/* Contact Form Specific Styles */
 .contact-form {
   display: flex;
   flex-direction: column;
@@ -436,6 +432,7 @@
   opacity: 0;
 }
 
+/* Staggered animation for contact items */
 .contact-links .contact-item:nth-child(1) { animation-delay: 0.2s; }
 .contact-links .contact-item:nth-child(2) { animation-delay: 0.3s; }
 .contact-links .contact-item:nth-child(3) { animation-delay: 0.4s; }
@@ -446,6 +443,7 @@
   opacity: 0;
 }
 
+/* Staggered animation for form elements */
 .form-input:nth-child(1) { animation-delay: 0.3s; }
 .form-input:nth-child(2) { animation-delay: 0.4s; }
 .form-textarea { animation-delay: 0.5s; }
@@ -468,7 +466,7 @@
   color: var(--terminal-bg);
 }
 
-/* Command Suggestions */
+/* Command Suggestions Styles */
 .command-suggestions {
   display: flex;
   flex-wrap: wrap;
@@ -501,6 +499,7 @@
   gap: 8px;
 }
 
+/* Shimmer effect for suggestion buttons */
 .suggestion-btn::before {
   content: '';
   position: absolute;
@@ -537,7 +536,7 @@
   transform: scale(1.2);
 }
 
-/* Experience Carousel */
+/* Experience Carousel Specific Styles */
 .experience-section {
   padding: 10px;
 }
@@ -563,7 +562,7 @@
 
 .experience-slider {
   display: flex;
-  transition: transform 0.4s ease;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   width: 100%;
 }
 
@@ -578,7 +577,6 @@
   animation: fadeIn 0.4s ease;
 }
 
-/* Card animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -621,7 +619,7 @@
   opacity: 0;
 }
 
-/* Staggered animation for list items */
+/* Staggered animation for responsibility list items */
 .job-responsibilities li:nth-child(1) { animation-delay: 0.1s; }
 .job-responsibilities li:nth-child(2) { animation-delay: 0.2s; }
 .job-responsibilities li:nth-child(3) { animation-delay: 0.3s; }
@@ -704,7 +702,7 @@
   transform: scale(1.2);
 }
 
-/* Navigation tip styling */
+/* Experience navigation tip styling */
 .navigation-tip {
   text-align: center;
   margin-top: 15px;
@@ -723,21 +721,21 @@
   margin: 0 3px;
 }
 
-/* Card actions animation */
+/* Card actions animation (if applicable elsewhere) */
 .card-actions a {
   animation: fadeInUp 0.5s ease forwards;
   opacity: 0;
 }
 
+/* Staggered animation for card actions */
 .card-actions a:nth-child(1) { animation-delay: 0.7s; }
 .card-actions a:nth-child(2) { animation-delay: 0.8s; }
 
-/* Global animations */
+/* Global fade-in animation */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
 @keyframes fadeInUp {
   from { 
     opacity: 0; 
@@ -749,6 +747,7 @@
   }
 }
 
+/* Contact Form Specific Styles */
 .contact-label {
   font-weight: bold;
   margin-right: 10px;
@@ -804,7 +803,7 @@
   background-color: var(--terminal-accent-hover);
 }
 
-/* Image container with overlay for zoom effect */
+/* Project Image Zoom Functionality */
 .image-container {
   position: relative;
   overflow: hidden;
@@ -860,7 +859,7 @@
   font-size: 25px;
 }
 
-/* Image Modal */
+/* Image Modal Functionality */
 .image-modal {
   position: fixed;
   top: 0;
