@@ -14,7 +14,7 @@ export interface Project {
 
 export interface Skill {
   name: string;
-  level: number; // 0-100
+  deviconClass: string;
 }
 
 export interface SkillCategory {
@@ -102,46 +102,42 @@ export class PortfolioService {
     }
   ];
 
-  //TODO: Find a better way to convey skillsets.
-  //Level bars are pretty but don't mean much
   private skillsEn: SkillCategory[] = [
     {
       name: 'Backend',
       skills: [
-        { name: 'C# (.NET)', level: 90 },
-        { name: 'ASP.NET Core', level: 85 },
-        { name: 'Entity Framework', level: 80 },
-        { name: 'Python', level: 70 }
+        { name: 'C# (.NET)', deviconClass: 'devicon-csharp-plain' },
+        { name: 'ASP.NET Core', deviconClass: 'devicon-dotnetcore-plain' },
+        { name: 'Python', deviconClass: 'devicon-python-plain' }
       ]
     },
     {
       name: 'Frontend',
       skills: [
-        { name: 'HTML/CSS', level: 85 },
-        { name: 'JavaScript', level: 80 },
-        { name: 'TypeScript', level: 75 },
-        { name: 'Angular', level: 80 },
-        { name: 'React', level: 70 }
+        { name: 'HTML', deviconClass: 'devicon-html5-plain' },
+        { name: 'CSS', deviconClass: 'devicon-css3-plain' },
+        { name: 'JavaScript', deviconClass: 'devicon-javascript-plain' },
+        { name: 'TypeScript', deviconClass: 'devicon-typescript-plain' },
+        { name: 'Angular', deviconClass: 'devicon-angular-plain' },
+        { name: 'React', deviconClass: 'devicon-react-original' }
       ]
     },
     {
       name: 'Databases',
       skills: [
-        { name: 'SQL Server', level: 85 },
-        { name: 'MongoDB', level: 70 },
-        { name: 'ClickHouse', level: 65 },
-        { name: 'Redis', level: 60 }
+        { name: 'SQL Server', deviconClass: 'devicon-microsoftsqlserver-plain' },
+        { name: 'MongoDB', deviconClass: 'devicon-mongodb-plain' },
+        { name: 'Redis', deviconClass: 'devicon-redis-plain' }
       ]
     },
     {
       name: 'DevOps',
       skills: [
-        { name: 'Git', level: 80 },
-        { name: 'Docker', level: 75 },
-        { name: 'RabbitMQ', level: 75},
-        { name: 'IIS', level: 70 },
-        { name: 'Nginx', level: 70 },        
-        { name: 'WSL', level: 65 }
+        { name: 'Git', deviconClass: 'devicon-git-plain' },
+        { name: 'Docker', deviconClass: 'devicon-docker-plain' },
+        { name: 'Portainer', deviconClass: 'devicon-portainer-plain' },
+        { name: 'RabbitMQ', deviconClass: 'devicon-rabbitmq-plain' },
+        { name: 'Nginx', deviconClass: 'devicon-nginx-original' }
       ]
     }
   ];
@@ -150,40 +146,38 @@ export class PortfolioService {
     {
       name: 'Backend',
       skills: [
-        { name: 'C# (.NET)', level: 90 },
-        { name: 'ASP.NET Core', level: 85 },
-        { name: 'Entity Framework', level: 80 },
-        { name: 'Python', level: 70 }
+        { name: 'C# (.NET)', deviconClass: 'devicon-csharp-plain' },
+        { name: 'ASP.NET Core', deviconClass: 'devicon-dotnetcore-plain' },
+        { name: 'Python', deviconClass: 'devicon-python-plain' }
       ]
     },
     {
       name: 'Frontend',
       skills: [
-        { name: 'HTML/CSS', level: 85 },
-        { name: 'JavaScript', level: 80 },
-        { name: 'TypeScript', level: 75 },
-        { name: 'Angular', level: 80 },
-        { name: 'React', level: 70 }
+        { name: 'HTML', deviconClass: 'devicon-html5-plain' },
+        { name: 'CSS', deviconClass: 'devicon-css3-plain' },
+        { name: 'JavaScript', deviconClass: 'devicon-javascript-plain' },
+        { name: 'TypeScript', deviconClass: 'devicon-typescript-plain' },
+        { name: 'Angular', deviconClass: 'devicon-angular-plain' },
+        { name: 'React', deviconClass: 'devicon-react-original' }
       ]
     },
     {
-      name: 'Databases',
+      name: 'Bancos de Dados',
       skills: [
-        { name: 'SQL Server', level: 85 },
-        { name: 'MongoDB', level: 70 },
-        { name: 'ClickHouse', level: 65 },
-        { name: 'Redis', level: 60 }
+        { name: 'SQL Server', deviconClass: 'devicon-microsoftsqlserver-plain' },
+        { name: 'MongoDB', deviconClass: 'devicon-mongodb-plain' },
+        { name: 'Redis', deviconClass: 'devicon-redis-plain' }
       ]
     },
     {
       name: 'DevOps',
       skills: [
-        { name: 'Git', level: 80 },
-        { name: 'Docker', level: 75 },
-        { name: 'RabbitMQ', level: 75},
-        { name: 'IIS', level: 70 },
-        { name: 'Nginx', level: 70 },        
-        { name: 'WSL', level: 65 }
+        { name: 'Git', deviconClass: 'devicon-git-plain' },
+        { name: 'Docker', deviconClass: 'devicon-docker-plain' },
+        { name: 'Portainer', deviconClass: 'devicon-portainer-plain' },
+        { name: 'RabbitMQ', deviconClass: 'devicon-rabbitmq-plain' },
+        { name: 'Nginx', deviconClass: 'devicon-nginx-original' }
       ]
     }
   ];

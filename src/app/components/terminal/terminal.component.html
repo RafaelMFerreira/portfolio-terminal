@@ -38,11 +38,9 @@
           <div *ngFor="let category of currentVisualResponse.data; let i = index" class="skill-category" [attr.data-index]="i">
             <h3>{{category.name}}</h3>
             <div class="skill-items">
-              <div *ngFor="let skill of category.skills; let j = index" class="skill-bar" [attr.data-index]="j">
-                <span class="skill-name">{{skill.name}}</span>
-                <div class="skill-level">
-                  <div class="skill-fill" [style.width.%]="skill.level"></div>
-                </div>
+              <div *ngFor="let skill of category.skills; let j = index" class="skill-icon-container" [attr.data-index]="j" > 
+                <i class="skill-icon" [ngClass]="skill.deviconClass"></i>
+                <span class="skill-name">{{ skill.name }}</span>
               </div>
             </div>
           </div>

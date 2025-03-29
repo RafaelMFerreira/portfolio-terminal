@@ -258,26 +258,79 @@
 
 .skill-category h3 {
   color: var(--terminal-accent);
-  margin-bottom: 10px;
+  margin-bottom: 15px;
 }
 
-.skill-bar {
-  margin-bottom: 10px;
+/* Style the container for skill items (icons) */
+.skill-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+/* Add styles for the icon container */
+.skill-icon-container {
+  display: flex;
+  flex-direction: column; /* Stack icon and name vertically */
+  justify-content: center;
+  align-items: center;
+  padding: 10px; /* Adjust padding */
+  min-width: 80px; /* Give some minimum width */
+  text-align: center; /* Center the name */
+  border: 1px solid var(--terminal-border-light);
+  border-radius: 4px;
+  background-color: var(--terminal-accent-transparent);
   animation: fadeInRight 0.5s ease forwards;
   opacity: 0;
+  transition: transform 0.3s ease, border-color 0.3s ease, background-color 0.3s ease; /* Add background transition */
 }
 
-.skill-items .skill-bar:nth-child(1) { animation-delay: 0.1s; }
-.skill-items .skill-bar:nth-child(2) { animation-delay: 0.2s; }
-.skill-items .skill-bar:nth-child(3) { animation-delay: 0.3s; }
-.skill-items .skill-bar:nth-child(4) { animation-delay: 0.4s; }
-.skill-items .skill-bar:nth-child(5) { animation-delay: 0.5s; }
-.skill-items .skill-bar:nth-child(6) { animation-delay: 0.6s; }
+/* Stagger animation for icon containers */
+.skill-items .skill-icon-container:nth-child(1) { animation-delay: 0.1s; }
+.skill-items .skill-icon-container:nth-child(2) { animation-delay: 0.15s; }
+.skill-items .skill-icon-container:nth-child(3) { animation-delay: 0.2s; }
+.skill-items .skill-icon-container:nth-child(4) { animation-delay: 0.25s; }
+.skill-items .skill-icon-container:nth-child(5) { animation-delay: 0.3s; }
+.skill-items .skill-icon-container:nth-child(6) { animation-delay: 0.35s; }
+.skill-items .skill-icon-container:nth-child(7) { animation-delay: 0.4s; }
+.skill-items .skill-icon-container:nth-child(8) { animation-delay: 0.45s; }
+/* Add more if needed */
+
+.skill-icon-container:hover {
+  transform: translateY(-3px); /* Keep scale effect? Maybe remove */
+  border-color: var(--terminal-accent);
+  background-color: var(--terminal-accent); /* Fill background on hover */
+}
+
+/* Style the icon (<i> tag) itself */
+.skill-icon {
+  font-size: 2.5em; 
+  color: var(--terminal-fg); 
+  margin-bottom: 8px; /* Space between icon and name */
+  transition: color 0.3s ease;
+}
+
+.skill-icon-container:hover .skill-icon {
+  color: var(--terminal-bg); /* Change icon color on hover for contrast */
+}
+
+/* Add styles for the skill name span */
+.skill-name {
+  display: block; /* Ensure it takes its own line */
+  font-size: 0.8rem; /* Smaller font size for the name */
+  color: var(--terminal-fg);
+  margin-top: auto; /* Push name towards the bottom if container has extra space */
+  transition: color 0.3s ease;
+}
+
+.skill-icon-container:hover .skill-name {
+  color: var(--terminal-bg); /* Change name color on hover for contrast */
+}
 
 @keyframes fadeInRight {
   from {
     opacity: 0;
-    transform: translateX(20px);
+    transform: translateX(15px);
   }
   to {
     opacity: 1;
@@ -689,24 +742,6 @@
     opacity: 1; 
     transform: translateY(0); 
   }
-}
-
-.skill-name {
-  display: block;
-  margin-bottom: 5px;
-}
-
-.skill-level {
-  background-color: rgba(255, 255, 255, 0.1);
-  height: 10px;
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-.skill-fill {
-  height: 100%;
-  background-color: var(--terminal-accent);
-  transition: width 1s ease;
 }
 
 .contact-label {

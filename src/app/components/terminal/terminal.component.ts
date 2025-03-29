@@ -352,7 +352,6 @@ export class TerminalComponent implements OnInit {
       const promptRegex = new RegExp(`^(${escapedPrompt})\\s+(.*)$`);
       const match = text.match(promptRegex);
       
-      debugger
       if (match && match.length >= 3) {
         const promptPart = match[1];
         const commandPart = match[2];
