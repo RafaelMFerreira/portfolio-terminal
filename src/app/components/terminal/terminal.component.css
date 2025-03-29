@@ -271,18 +271,19 @@
 /* Add styles for the icon container */
 .skill-icon-container {
   display: flex;
-  flex-direction: column; /* Stack icon and name vertically */
-  justify-content: center;
+  flex-direction: column; 
+  justify-content: flex-start; 
   align-items: center;
-  padding: 10px; /* Adjust padding */
-  min-width: 80px; /* Give some minimum width */
-  text-align: center; /* Center the name */
-  border: 1px solid var(--terminal-border-light);
-  border-radius: 4px;
-  background-color: var(--terminal-accent-transparent);
+  padding: 10px; /* Add padding back for spacing on hover */
+  min-width: 70px; 
+  text-align: center; 
+  border: 1px solid transparent; /* Transparent border initially to prevent layout shift */
+  border-radius: 4px; 
+  background-color: transparent; /* Explicitly transparent */
   animation: fadeInRight 0.5s ease forwards;
   opacity: 0;
-  transition: transform 0.3s ease, border-color 0.3s ease, background-color 0.3s ease; /* Add background transition */
+  /* Include background-color and border-color in transition */
+  transition: transform 0.3s ease, background-color 0.3s ease, border-color 0.3s ease; 
 }
 
 /* Stagger animation for icon containers */
@@ -297,34 +298,38 @@
 /* Add more if needed */
 
 .skill-icon-container:hover {
-  transform: translateY(-3px); /* Keep scale effect? Maybe remove */
-  border-color: var(--terminal-accent);
-  background-color: var(--terminal-accent); /* Fill background on hover */
+  transform: translateY(-3px); 
+  /* Add background and border color back on hover */
+  border-color: var(--terminal-accent); 
+  background-color: var(--terminal-accent); 
 }
 
 /* Style the icon (<i> tag) itself */
 .skill-icon {
-  font-size: 2.5em; 
+  font-size: 2.8em; 
   color: var(--terminal-fg); 
-  margin-bottom: 8px; /* Space between icon and name */
+  margin-bottom: 8px; 
   transition: color 0.3s ease;
 }
 
 .skill-icon-container:hover .skill-icon {
-  color: var(--terminal-bg); /* Change icon color on hover for contrast */
+  /* Keep color change for contrast */
+  color: var(--terminal-bg); 
 }
 
 /* Add styles for the skill name span */
 .skill-name {
-  display: block; /* Ensure it takes its own line */
-  font-size: 0.8rem; /* Smaller font size for the name */
+  display: block; 
+  font-size: 0.8rem; 
   color: var(--terminal-fg);
-  margin-top: auto; /* Push name towards the bottom if container has extra space */
-  transition: color 0.3s ease;
+  opacity: 0.8; 
+  transition: color 0.3s ease, opacity 0.3s ease; /* Add opacity transition */
 }
 
 .skill-icon-container:hover .skill-name {
-  color: var(--terminal-bg); /* Change name color on hover for contrast */
+  /* Keep color change for contrast */
+  color: var(--terminal-bg); 
+  opacity: 1; 
 }
 
 @keyframes fadeInRight {
