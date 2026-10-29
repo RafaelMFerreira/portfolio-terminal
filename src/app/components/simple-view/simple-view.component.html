@@ -1,0 +1,126 @@
+<div class="simple">
+
+  <!-- Coluna de terminal: navegação -->
+  <aside class="simple-nav">
+    <div class="nav-title">rmf — terminal</div>
+
+    <div class="block who">
+      <div><span class="ps">$</span> whoami</div>
+      <div class="strong">{{ about.name }}</div>
+      <div class="muted">{{ about.title }}</div>
+    </div>
+
+    <nav class="block" [attr.aria-label]="isEn ? 'Sections' : 'Seções'">
+      <div><span class="ps">$</span> ls ~/</div>
+      <ul class="folders">
+        <li *ngFor="let s of sections">
+          <button type="button" [class.on]="s === section" [attr.aria-current]="s === section ? 'page' : null"
+                  (click)="open(s)">{{ folder(s) }}/</button>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="block cd">
+      <div><span class="ps">$</span> cd {{ folder(section) }}</div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <form class="nav-input" (submit)="runCommand($event)">
+      <label for="simple-cmd">{{ isEn ? 'type a folder name' : 'digite o nome de uma pasta' }}</label>
+      <div class="field">
+        <span class="ps">$</span>
+        <input id="simple-cmd" name="cmd" type="text" [(ngModel)]="command" autocomplete="off"
+               autocapitalize="off" spellcheck="false" placeholder="cd {{ folder('projects') }}">
+      </div>
+      <div *ngIf="commandError" class="error" role="status">{{ commandError }}</div>
+    </form>
+  </aside>
+
+  <!-- Conteúdo -->
+  <main class="simple-content">
+    <div class="path">~/{{ folder(section) }}</div>
+    <h1>{{ heading }}</h1>
+
+    <!-- Sobre -->
+    <section *ngIf="section === 'about'" class="about">
+      <img [src]="about.photo" [alt]="about.name">
+      <div>
+        <p class="lead">{{ about.bio }}</p>
+        <div class="actions">
+          <button type="button" class="pill dark" (click)="open('projects')">{{ isEn ? 'See projects' : 'Ver projetos' }}</button>
+          <button type="button" class="pill" (click)="open('contact')">{{ isEn ? 'Get in touch' : 'Entrar em contato' }}</button>
+          <a *ngIf="resumeUrl" class="pill" [href]="resumeUrl" target="_blank" rel="noopener">{{ isEn ? 'Résumé (PDF)' : 'Currículo (PDF)' }}</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Projetos -->
+    <section *ngIf="section === 'projects'" class="list">
+      <article *ngFor="let p of projects; let i = index" class="row">
+        <div class="idx">{{ pad(i) }}</div>
+        <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.title" class="thumb">
+        <div *ngIf="!p.imageUrl" class="thumb placeholder" aria-hidden="true">{{ p.technologies[0] }}</div>
+        <div class="body">
+          <h2>{{ p.title }}</h2>
+          <p>{{ p.description }}</p>
+          <div class="meta">
+            <span class="muted">{{ p.technologies.join(' · ') }}</span>
+            <a *ngIf="p.demoUrl" [href]="p.demoUrl" target="_blank" rel="noopener">demo ↗</a>
+            <a *ngIf="p.codeUrl" [href]="p.codeUrl" target="_blank" rel="noopener">{{ isEn ? 'code' : 'código' }} ↗</a>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- Habilidades -->
+    <section *ngIf="section === 'skills'" class="skills">
+      <div *ngFor="let c of skills" class="skill-group">
+        <h2>{{ c.name }}</h2>
+        <ul>
+          <li *ngFor="let s of c.skills"><i [ngClass]="s.deviconClass" aria-hidden="true"></i>{{ s.name }}</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Experiência -->
+    <section *ngIf="section === 'experience'" class="list">
+      <article *ngFor="let job of experience" class="row job">
+        <div class="period muted">{{ job.period }}</div>
+        <div class="body">
+          <h2>{{ job.title }}</h2>
+          <div class="company">{{ job.company }}</div>
+          <ul>
+            <li *ngFor="let r of job.responsibilities">{{ r }}</li>
+          </ul>
+        </div>
+      </article>
+    </section>
+
+    <!-- Contato -->
+    <section *ngIf="section === 'contact'" class="contact">
+      <div>
+        <p class="lead">{{ contact.message }}</p>
+        <dl>
+          <dt>Email</dt><dd><a [href]="'mailto:' + contact.email">{{ contact.email }}</a></dd>
+          <dt>LinkedIn</dt><dd><a [href]="'https://' + contact.linkedin" target="_blank" rel="noopener">{{ contact.linkedin }}</a></dd>
+          <dt>GitHub</dt><dd><a [href]="'https://' + contact.github" target="_blank" rel="noopener">{{ contact.github }}</a></dd>
+        </dl>
+      </div>
+      <form class="form" (submit)="sendContact($event)">
+        <label>{{ isEn ? 'Name' : 'Nome' }}
+          <input type="text" name="name" [(ngModel)]="contactDraft.name" autocomplete="name">
+        </label>
+        <label>Email
+          <input type="email" name="email" [(ngModel)]="contactDraft.email" autocomplete="email">
+        </label>
+        <label>{{ isEn ? 'Message' : 'Mensagem' }}
+          <textarea name="message" rows="5" [(ngModel)]="contactDraft.message" required></textarea>
+        </label>
+        <button type="submit" class="pill dark" [disabled]="!contactDraft.message.trim()">
+          {{ isEn ? 'Open in my email app' : 'Abrir no meu email' }}
+        </button>
+      </form>
+    </section>
+  </main>
+</div>

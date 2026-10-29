@@ -1,0 +1,150 @@
+:host { display: block; height: 100%; }
+
+.boot-menu {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 48px 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  background: var(--t-bg);
+  color: var(--t-fg);
+  font-family: var(--t-font);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-y: auto;
+  animation: menu-in 0.4s ease;
+}
+
+@keyframes menu-in { from { opacity: 0; } to { opacity: 1; } }
+
+.log { color: var(--t-muted); font-size: 13px; line-height: 1.7; }
+.log .found { color: var(--t-accent); }
+
+h1 { margin: 0; font-size: 32px; letter-spacing: -0.5px; line-height: 1.2; }
+.intro p { margin: 6px 0 0; color: var(--t-muted); }
+
+.options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.card {
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 8px;
+  color: inherit;
+  background: var(--t-bg);
+  border: 1px solid var(--t-border);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.card.on {
+  border-color: var(--t-prompt);
+  background: var(--t-surface);
+}
+
+.card:focus-visible { outline: 2px solid var(--t-prompt); outline-offset: 3px; }
+
+.label { display: flex; align-items: baseline; gap: 10px; margin-top: 4px; }
+
+.key {
+  display: inline-block;
+  min-width: 22px;
+  text-align: center;
+  font-size: 12px;
+  border-radius: 3px;
+  padding: 1px 4px;
+  border: 1px solid var(--t-border);
+  color: var(--t-muted);
+}
+
+.card.on .key { background: var(--t-prompt); border-color: var(--t-prompt); color: var(--t-bg); }
+
+.title { font-size: 18px; font-weight: 700; }
+.desc { color: var(--t-muted); font-size: 13px; line-height: 1.55; }
+
+.grow { flex: 1 1 auto; }
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+  color: var(--t-muted);
+  font-size: 13px;
+}
+
+.footer strong { color: var(--t-fg); font-weight: 500; }
+.key-hint { color: var(--t-accent); margin-left: 10px; }
+.key-hint:first-child { margin-left: 0; }
+
+/* --- miniaturas --------------------------------------------------------- */
+
+.mini { height: 180px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; }
+.bar { height: 6px; border-radius: 2px; }
+.w30 { width: 30%; } .w40 { width: 40%; } .w50 { width: 50%; } .w55 { width: 55%; }
+.w70 { width: 70%; } .w80 { width: 80%; } .w90 { width: 90%; }
+
+.mini-modern { border-radius: 4px; background: #101216; border: 1px solid #2A2F38; padding: 14px; }
+.mini-modern .prompt { height: 8px; background: #7FD4A0; }
+.mini-modern .dim { background: #3A404A; }
+.mini-modern .box { margin-top: 6px; border: 1px solid #2A2F38; border-radius: 3px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.mini-modern .sel { background: #2A3A30; border-left: 2px solid #7FD4A0; border-radius: 0; }
+.mini-modern .row { background: #23272E; }
+.mini-modern .chips { display: flex; gap: 5px; }
+.mini-modern .chips span { height: 10px; width: 28px; border: 1px solid #2A2F38; }
+.mini-modern .chips span.on { border-color: #3C6B50; }
+
+.mini-crt {
+  border-radius: 18px;
+  background: var(--crt-bg, #04120A);
+  border: 2px solid #26231F;
+  padding: 16px 18px;
+  gap: 9px;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
+}
+/* a miniatura usa o fósforo escolhido (verde por padrão) */
+.mini-crt .glow { height: 14px; border-radius: 0; background: var(--crt-fg, #62F59A); box-shadow: 0 0 8px var(--crt-glow, rgba(80, 255, 150, 0.6)); }
+.mini-crt .dim { height: 5px; border-radius: 0; background: var(--crt-dim, #3FA96A); }
+.mini-crt .dbl { margin-top: 6px; height: 64px; border: 3px double var(--crt-fg, #62F59A); box-shadow: 0 0 6px var(--crt-glow, rgba(80, 255, 150, 0.4)); }
+
+.mini-simple { flex-direction: row; gap: 0; border-radius: 4px; overflow: hidden; border: 1px solid #2A2F38; }
+.mini-simple .side { width: 32%; background: #14161A; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; }
+.mini-simple .side .bar { height: 5px; }
+.mini-simple .prompt { background: #7FD4A0; }
+.mini-simple .dim { background: #3A404A; }
+.mini-simple .page { flex: 1 1 auto; background: #F3F3F0; padding: 14px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; }
+.mini-simple .ink { height: 16px; border-radius: 0; background: #17181B; }
+.mini-simple .item { display: flex; gap: 8px; margin-top: 6px; }
+.mini-simple .img { width: 40px; height: 24px; background: #D5D5D0; flex-shrink: 0; }
+.mini-simple .lines { flex: 1 1 auto; display: flex; flex-direction: column; gap: 5px; }
+.mini-simple .lines i { display: block; height: 6px; background: #3B3E44; }
+.mini-simple .lines i.w70 { height: 5px; background: #B8B8B2; }
+
+/* Aparência da CRT (reboot feito na CRT): a VT323 é estreita, precisa de corpo maior. */
+:host-context(.look-crt) .boot-menu { font-size: 20px; line-height: 1.3; }
+:host-context(.look-crt) h1 { font-size: 44px; font-weight: 400; letter-spacing: 1px; }
+:host-context(.look-crt) .title { font-size: 24px; font-weight: 400; }
+:host-context(.look-crt) .desc,
+:host-context(.look-crt) .footer,
+:host-context(.look-crt) .log { font-size: 19px; }
+:host-context(.look-crt) .key { font-size: 18px; }
+:host-context(.look-crt) .card.on .key { text-shadow: none; }
+
+@media (max-width: 900px) {
+  .boot-menu { padding: 28px 20px; gap: 20px; }
+  h1 { font-size: 24px; }
+  .options { grid-template-columns: 1fr; gap: 12px; }
+  .mini { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-menu { animation: none; }
+}

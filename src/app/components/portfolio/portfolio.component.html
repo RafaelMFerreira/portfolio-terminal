@@ -1,17 +1,35 @@
-<div class="portfolio-container" [ngClass]="{'shutdown': isShutdown, 'crt': true}">
-  <div *ngIf="showIntro" class="name-container" [style.opacity]="nameOpacity">
-    <div class="glitch" [attr.data-text]="nameText">{{nameText}}</div>
+<!-- look-crt: intro e menu de boot com a aparência da CRT quando é ela que o visitante está vendo (ex.: reboot na CRT) -->
+<div class="portfolio-container" [class.look-crt]="view === 'crt' && stage !== 'view'">
+
+  <!-- Intro: glitch do nome -->
+  <div *ngIf="stage === 'intro'" class="name-container" [style.opacity]="nameOpacity">
+    <div class="glitch" [attr.data-text]="nameText">{{ nameText }}</div>
   </div>
 
-  <div *ngIf="showBootScreen" class="boot-screen">
-    <div class="boot-log">{{bootLog}}</div>
+  <!-- Intro: log de boot -->
+  <div *ngIf="stage === 'boot'" class="boot-screen">
+    <div class="boot-log">{{ bootLog }}</div>
   </div>
 
-  <app-terminal
-    *ngIf="showTerminal"
-    [commands]="terminalCommands"
-    [prompt]="terminalPrompt"
-    [initialMessage]="terminalInitialMessage"
-    (commandExecuted)="onCommandExecuted($event)">
-  </app-terminal>
+  <button *ngIf="stage === 'intro' || stage === 'boot'" type="button" class="skip" (click)="skipIntro()">
+    {{ lang === 'en' ? 'skip intro' : 'pular intro' }} [esc]
+  </button>
+
+  <!-- Fim da intro: escolha -->
+  <app-boot-menu *ngIf="stage === 'menu'" [lang]="lang" [initial]="view" (chosen)="onViewChosen($event)"></app-boot-menu>
+
+  <!-- Visualizações. Blocos separados de propósito: trocar recria o componente e toca a animação de entrada. -->
+  <ng-container *ngIf="stage === 'view'">
+    <app-terminal *ngIf="view === 'modern'" variant="modern"
+                  [commands]="terminalCommands" [prompt]="terminalPrompt" [initialMessage]="terminalInitialMessage"
+                  (commandExecuted)="onCommandExecuted($event)"></app-terminal>
+
+    <app-terminal *ngIf="view === 'crt'" variant="crt"
+                  [commands]="terminalCommands" [prompt]="terminalPrompt" [initialMessage]="terminalInitialMessage"
+                  (commandExecuted)="onCommandExecuted($event)"></app-terminal>
+
+    <app-simple-view *ngIf="view === 'simple'"></app-simple-view>
+
+    <app-view-switcher></app-view-switcher>
+  </ng-container>
 </div>

@@ -1,0 +1,71 @@
+<div class="boot-menu">
+  <div class="log">
+    <div>Recovery failed: critical system files missing.</div>
+    <div>Initiating emergency recovery mode...</div>
+    <div class="found">{{ isEn ? '3 display environments found.' : '3 ambientes de exibição encontrados.' }}</div>
+  </div>
+
+  <div class="intro">
+    <h1>{{ isEn ? 'How do you want to see the portfolio?' : 'Como você quer ver o portfólio?' }}</h1>
+    <p>{{ isEn ? 'You can switch anytime in the top-right corner.' : 'Dá para trocar a qualquer momento no canto superior direito.' }}</p>
+  </div>
+
+  <div class="options" role="group" [attr.aria-label]="isEn ? 'Views' : 'Visualizações'">
+    <button *ngFor="let o of options" type="button" class="card" [class.on]="o.view === selected"
+            [attr.aria-pressed]="o.view === selected"
+            (mouseenter)="select(o.view)" (focus)="select(o.view)" (click)="start(o.view)">
+
+      <!-- miniaturas -->
+      <div *ngIf="o.view === 'modern'" class="mini mini-modern" aria-hidden="true">
+        <div class="bar w40 prompt"></div>
+        <div class="bar w70 dim"></div>
+        <div class="box">
+          <div class="bar sel"></div>
+          <div class="bar row"></div>
+          <div class="bar row"></div>
+        </div>
+        <div class="grow"></div>
+        <div class="chips"><span></span><span class="on"></span><span></span></div>
+      </div>
+
+      <div *ngIf="o.view === 'crt'" class="mini mini-crt" aria-hidden="true">
+        <div class="bar w80 glow"></div>
+        <div class="bar w55 dim"></div>
+        <div class="dbl"></div>
+        <div class="bar w30 dim"></div>
+      </div>
+
+      <div *ngIf="o.view === 'simple'" class="mini mini-simple" aria-hidden="true">
+        <div class="side">
+          <div class="bar w70 prompt"></div>
+          <div class="bar w90 dim"></div>
+          <div class="bar w50 dim"></div>
+        </div>
+        <div class="page">
+          <div class="bar w70 ink"></div>
+          <div class="item"><span class="img"></span><span class="lines"><i></i><i class="w70"></i></span></div>
+          <div class="item"><span class="img"></span><span class="lines"><i></i><i class="w70"></i></span></div>
+        </div>
+      </div>
+
+      <span class="label">
+        <span class="key">{{ o.key }}</span>
+        <span class="title">{{ o.title[lang] }}</span>
+      </span>
+      <span class="desc">{{ o.desc[lang] }}</span>
+    </button>
+  </div>
+
+  <div class="grow"></div>
+
+  <div class="footer">
+    <div>
+      <span class="key-hint">1 2 3</span> {{ isEn ? 'choose' : 'escolher' }}
+      <span class="key-hint">← →</span> {{ isEn ? 'browse' : 'navegar' }}
+      <span class="key-hint">⏎</span> {{ isEn ? 'start' : 'iniciar' }}
+    </div>
+    <div *ngIf="countingDown" aria-live="polite">
+      {{ isEn ? 'starting' : 'iniciando' }} <strong>{{ selectedTitle }}</strong> {{ isEn ? 'in' : 'em' }} {{ secondsLeft }}s...
+    </div>
+  </div>
+</div>

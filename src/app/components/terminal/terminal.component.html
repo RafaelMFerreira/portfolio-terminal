@@ -1,162 +1,198 @@
-<div #terminalContainer class="terminal-container" [ngClass]="{'crt': enableCrtEffect}">
-  <div #terminalOutput class="terminal-output"></div>
+<div class="terminal" [ngClass]="'variant-' + variant">
+  <div class="screen">
 
-  <!-- Visual response area -->
-  <div *ngIf="currentVisualResponse" class="visual-response-area">
-    <div [ngSwitch]="currentVisualResponse.type">
-      <div *ngSwitchCase="'project'" class="project-card">
-        <div class="project-grid">
-          <div *ngFor="let project of currentVisualResponse.data; let i = index" class="project-item" [attr.data-index]="i">
-            <div class="card">
-              <div class="image-container" *ngIf="project.imageUrl" (click)="openImageModal(project.imageUrl, project.title)">
-                <img [src]="project.imageUrl" [alt]="project.title">
-                <div class="image-overlay">
-                  <span class="zoom-icon">🔍</span>
+    <!-- Moderno: barra superior com a aba (o seletor de visualização fica por cima, à direita) -->
+    <header *ngIf="variant === 'modern'" class="topbar">
+      <div class="tab">rmf — ~/portfolio</div>
+    </header>
+
+    <!-- CRT: cabeçalho de sistema e nome grande -->
+    <header *ngIf="variant === 'crt'" class="crt-header">
+      <div class="crt-status">RMF-OS 2.0 · {{ isEn ? 'RECOVERY MODE' : 'MODO DE RECUPERAÇÃO' }}</div>
+      <h1 class="crt-name">RAFAEL MIRANDA FERREIRA</h1>
+      <div class="crt-role">{{ isEn ? 'FULL-STACK DEVELOPER' : 'DESENVOLVEDOR FULL-STACK' }} · C#/.NET · ANGULAR · SQL</div>
+    </header>
+
+    <main #terminalOutput class="scroll" (click)="onScrollClick($event)">
+
+      <ng-container *ngFor="let line of lines; trackBy: trackByIndex">
+        <div *ngIf="line.kind === 'command'" class="line command"><span class="prompt">{{ prompt }}</span> {{ line.text }}</div>
+        <div *ngIf="line.kind === 'text'" class="line out">{{ line.text }}</div>
+      </ng-container>
+
+      <!-- Painel da resposta visual -->
+      <section *ngIf="currentVisualResponse" class="panel" [attr.aria-label]="currentVisualResponse.type">
+
+        <!-- ===================== CRT: tudo em texto ===================== -->
+        <ng-container *ngIf="variant === 'crt'">
+          <pre class="crt-box">{{ crtText }}</pre>
+          <div *ngIf="crtLinks.length" class="crt-links">
+            <a *ngFor="let link of crtLinks" [href]="link.href" target="_blank" rel="noopener">&gt; {{ link.label }}</a>
+          </div>        </ng-container>
+
+        <!-- ===================== Moderno ===================== -->
+        <ng-container *ngIf="variant === 'modern'">
+          <div class="panel-frame" [ngSwitch]="currentVisualResponse.type">
+
+            <!-- Projetos: tabela -->
+            <ng-container *ngSwitchCase="'project'">
+              <div class="panel-title">{{ isEn ? 'projects' : 'projetos' }} ({{ currentVisualResponse.data.length }})</div>
+              <div class="table" role="table">
+                <div class="tr th" role="row">
+                  <div role="columnheader">{{ isEn ? 'name' : 'nome' }}</div>
+                  <div role="columnheader">{{ isEn ? 'description' : 'descrição' }}</div>
+                  <div role="columnheader">stack</div>
+                  <div role="columnheader">links</div>
+                </div>
+                <div *ngFor="let project of currentVisualResponse.data" class="tr" role="row">
+                  <div class="name" role="cell">{{ project.title }}</div>
+                  <div role="cell">{{ project.description }}</div>
+                  <div class="stack" role="cell">{{ project.technologies.join(' · ') }}</div>
+                  <div class="links" role="cell">
+                    <a *ngIf="project.demoUrl" [href]="project.demoUrl" target="_blank" rel="noopener">demo</a>
+                    <a *ngIf="project.codeUrl" [href]="project.codeUrl" target="_blank" rel="noopener">{{ isEn ? 'code' : 'código' }}</a>
+                    <button *ngIf="project.imageUrl" type="button" class="link-btn"
+                            (click)="openImageModal(project.imageUrl, project.title)">{{ isEn ? 'image' : 'imagem' }}</button>
+                    <span *ngIf="!project.demoUrl && !project.codeUrl" class="muted">{{ isEn ? 'private' : 'privado' }}</span>
+                  </div>
                 </div>
               </div>
-              <div *ngIf="!project.imageUrl" class="no-image">
-                <span class="no-image-text">{{ languageService.getCurrentLanguage() === 'en' ? 'No image available' : 'Imagem não disponível' }}</span>
-              </div>
-              <div class="card-content">
-                <h3>{{project.title}}</h3>
-                <p>{{project.description}}</p>
-                <div class="tech-tags">
-                  <span *ngFor="let tech of project.technologies; let j = index" class="tech-tag" [attr.data-index]="j">{{tech}}</span>
+            </ng-container>
+
+            <!-- Skills -->
+            <ng-container *ngSwitchCase="'skills'">
+              <div class="panel-title">{{ isEn ? 'skills' : 'habilidades' }}</div>
+              <div class="skills">
+                <div *ngFor="let category of currentVisualResponse.data" class="skill-group">
+                  <h3>{{ category.name }}</h3>
+                  <ul>
+                    <li *ngFor="let skill of category.skills">
+                      <i [ngClass]="skill.deviconClass" aria-hidden="true"></i>
+                      <span>{{ skill.name }}</span>
+                    </li>
+                  </ul>
                 </div>
-                <div class="card-actions">
-                  <a *ngIf="project.demoUrl" [href]="project.demoUrl" target="_blank" class="btn">{{ languageService.getCurrentLanguage() === 'en' ? 'Demo' : 'Demo' }}</a>
-                  <a *ngIf="project.codeUrl" [href]="project.codeUrl" target="_blank" class="btn">{{ languageService.getCurrentLanguage() === 'en' ? 'Code' : 'Código' }}</a>
+              </div>
+            </ng-container>
+
+            <!-- Sobre -->
+            <ng-container *ngSwitchCase="'about'">
+              <div class="panel-title">{{ isEn ? 'about' : 'sobre' }}</div>
+              <div class="about">
+                <img [src]="currentVisualResponse.data.photo" [alt]="currentVisualResponse.data.name">
+                <div>
+                  <h2>{{ currentVisualResponse.data.name }}</h2>
+                  <div class="accent">{{ currentVisualResponse.data.title }}</div>
+                  <p>{{ currentVisualResponse.data.bio }}</p>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
+            </ng-container>
 
-      <div *ngSwitchCase="'skills'" class="skills-display">
-        <div class="skills-grid">
-          <div *ngFor="let category of currentVisualResponse.data; let i = index" class="skill-category" [attr.data-index]="i">
-            <h3>{{category.name}}</h3>
-            <div class="skill-items">
-              <div *ngFor="let skill of category.skills; let j = index" class="skill-icon-container" [attr.data-index]="j" > 
-                <i class="skill-icon" [ngClass]="skill.deviconClass"></i>
-                <span class="skill-name">{{ skill.name }}</span>
+            <!-- Experiência: uma posição por vez -->
+            <ng-container *ngSwitchCase="'experience'">
+              <div class="panel-title">
+                {{ isEn ? 'experience' : 'experiência' }} ({{ currentExperienceIndex + 1 }}/{{ currentVisualResponse.data.length }})
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
+              <div class="experience">
+                <button type="button" class="nav" (click)="navigateExperience(-1)" [disabled]="currentExperienceIndex === 0"
+                        [attr.aria-label]="isEn ? 'Previous' : 'Anterior'">‹</button>
+                <article *ngIf="currentVisualResponse.data[currentExperienceIndex] as job" class="job">
+                  <div class="job-head">
+                    <h3>{{ job.title }}</h3>
+                    <span class="muted">{{ job.period }}</span>
+                  </div>
+                  <div class="accent">{{ job.company }}</div>
+                  <ul>
+                    <li *ngFor="let item of job.responsibilities">{{ item }}</li>
+                  </ul>
+                </article>
+                <button type="button" class="nav" (click)="navigateExperience(1)"
+                        [disabled]="currentExperienceIndex >= currentVisualResponse.data.length - 1"
+                        [attr.aria-label]="isEn ? 'Next' : 'Próxima'">›</button>
+              </div>
+              <div class="dots">
+                <button *ngFor="let job of currentVisualResponse.data; let i = index" type="button" class="dot"
+                        [class.on]="i === currentExperienceIndex" (click)="setExperienceIndex(i)"
+                        [attr.aria-label]="job.title"></button>
+              </div>
+            </ng-container>
 
-      <div *ngSwitchCase="'about'" class="about-section">
-        <div class="about-content">
-          <img [src]="currentVisualResponse.data.photo" alt="Profile Photo" class="profile-photo">
-          <div class="about-text">
-            <h2>{{currentVisualResponse.data.name}}</h2>
-            <h3>{{currentVisualResponse.data.title}}</h3>
-            <p>{{currentVisualResponse.data.bio}}</p>
-          </div>
-        </div>
-      </div>
-
-      <div *ngSwitchCase="'experience'" class="experience-section">
-        <h2>{{ languageService.getCurrentLanguage() === 'en' ? 'Professional Experience' : 'Experiência Profissional' }}</h2>
-        <div class="experience-carousel">
-          <button class="carousel-nav prev" (click)="navigateExperience(-1)" [disabled]="currentExperienceIndex === 0">
-            <span>&lt;</span>
-          </button>
-          
-          <div class="experience-container">
-            <div class="experience-slider" [style.transform]="'translateX(' + (-currentExperienceIndex * 100) + '%)'">
-              <div *ngFor="let job of currentVisualResponse.data; let i = index" 
-                   class="experience-card" 
-                   [attr.data-index]="i">
-                <div class="experience-header">
-                  <h3>{{job.title}}</h3>
-                  <div class="experience-company">{{job.company}}</div>
-                  <div class="experience-period">{{job.period}}</div>
+            <!-- Contato -->
+            <ng-container *ngSwitchCase="'contact'">
+              <div class="panel-title">{{ isEn ? 'contact' : 'contato' }}</div>
+              <div class="contact">
+                <div>
+                  <p>{{ currentVisualResponse.data.message }}</p>
+                  <dl>
+                    <dt>email</dt><dd><a [href]="'mailto:' + currentVisualResponse.data.email">{{ currentVisualResponse.data.email }}</a></dd>
+                    <dt>linkedin</dt><dd><a [href]="'https://' + currentVisualResponse.data.linkedin" target="_blank" rel="noopener">{{ currentVisualResponse.data.linkedin }}</a></dd>
+                    <dt>github</dt><dd><a [href]="'https://' + currentVisualResponse.data.github" target="_blank" rel="noopener">{{ currentVisualResponse.data.github }}</a></dd>
+                  </dl>
                 </div>
-                <ul class="job-responsibilities">
-                  <li *ngFor="let responsibility of job.responsibilities">{{responsibility}}</li>
-                </ul>
+                <form class="form" (submit)="sendContact($event)">
+                  <label>{{ isEn ? 'Name' : 'Nome' }}
+                    <input type="text" name="name" [(ngModel)]="contactDraft.name" autocomplete="name">
+                  </label>
+                  <label>Email
+                    <input type="email" name="email" [(ngModel)]="contactDraft.email" autocomplete="email">
+                  </label>
+                  <label>{{ isEn ? 'Message' : 'Mensagem' }}
+                    <textarea name="message" rows="4" [(ngModel)]="contactDraft.message" required></textarea>
+                  </label>
+                  <button type="submit" class="primary" [disabled]="!contactDraft.message.trim()">
+                    {{ isEn ? 'Open in my email app' : 'Abrir no meu email' }}
+                  </button>
+                </form>
               </div>
-            </div>
+            </ng-container>
           </div>
-          
-          <button class="carousel-nav next" (click)="navigateExperience(1)" [disabled]="currentExperienceIndex >= currentVisualResponse.data.length - 1">
-            <span>&gt;</span>
-          </button>
-        </div>
-        
-        <div class="carousel-indicators">
-          <button *ngFor="let job of currentVisualResponse.data; let i = index" 
-                  class="indicator" 
-                  [style.backgroundColor]="i === currentExperienceIndex ? 'var(--terminal-accent)' : 'transparent'"
-                  (click)="setExperienceIndex(i)"></button>
-        </div>
-        
-        <div class="navigation-tip">
-          <span>{{ languageService.getCurrentLanguage() === 'en' ? 'Tip: Use' : 'Dica: Use' }} <kbd>←</kbd> {{ languageService.getCurrentLanguage() === 'en' ? 'and' : 'e' }} <kbd>→</kbd> {{ languageService.getCurrentLanguage() === 'en' ? 'arrow keys to navigate experiences' : 'teclas de seta para navegar pelas experiências' }}</span>
-        </div>
-      </div>
-
-      <div *ngSwitchCase="'contact'" class="contact-form">
-        <div class="contact-info">
-          <h2>{{ languageService.getCurrentLanguage() === 'en' ? 'Get In Touch' : 'Entre em Contato' }}</h2>
-          <p>{{currentVisualResponse.data.message}}</p>
-          <div class="contact-links">
-            <div class="contact-item">
-              <span class="contact-label">Email:</span>
-              <a [href]="'mailto:' + currentVisualResponse.data.email">{{currentVisualResponse.data.email}}</a>
-            </div>
-            <div class="contact-item">
-              <span class="contact-label">LinkedIn:</span>
-              <a [href]="'https://' + currentVisualResponse.data.linkedin" target="_blank">{{currentVisualResponse.data.linkedin}}</a>
-            </div>
-            <div class="contact-item">
-              <span class="contact-label">GitHub:</span>
-              <a [href]="'https://' + currentVisualResponse.data.github" target="_blank">{{currentVisualResponse.data.github}}</a>
-            </div>
-            
+          <div class="panel-hint">
+            <span class="key">esc</span> {{ isEn ? 'close' : 'fechar' }}
+            <ng-container *ngIf="currentVisualResponse.type === 'experience'">
+              <span class="key">← →</span> {{ isEn ? 'browse' : 'navegar' }}
+            </ng-container>
           </div>
-        </div>
-        <form class="contact-grid">
-          <input type="text" placeholder="{{ languageService.getCurrentLanguage() === 'en' ? 'Name' : 'Nome' }}" class="form-input">
-          <input type="email" placeholder="Email" class="form-input">
-          <textarea placeholder="{{ languageService.getCurrentLanguage() === 'en' ? 'Message' : 'Mensagem' }}" class="form-textarea"></textarea>
-          <button type="submit" class="form-button">{{ languageService.getCurrentLanguage() === 'en' ? 'Send Message' : 'Enviar Mensagem' }}</button>
-        </form>
-      </div>
-    </div>
+        </ng-container>
 
-    <button class="close-visual" (click)="closeVisualResponse()">{{ languageService.getCurrentLanguage() === 'en' ? 'Close [ESC]' : 'Fechar [ESC]' }}</button>
+        <button type="button" class="close" (click)="closeVisualResponse()">{{ isEn ? 'Close' : 'Fechar' }} [esc]</button>
+      </section>
+
+      <!-- Linha de comando -->
+      <div class="input-line">
+        <label for="terminal-input" class="prompt">{{ prompt }}</label>
+        <input #commandInput id="terminal-input" type="text" [(ngModel)]="currentCommand"
+               (keydown)="handleKeyDown($event)" autocomplete="off" autocapitalize="off" spellcheck="false"
+               [placeholder]="isEn ? 'type a command, or click one below' : 'digite um comando, ou clique em um abaixo'">
+      </div>
+    </main>
+
+    <nav class="commands" [attr.aria-label]="isEn ? 'Commands' : 'Comandos'">
+      <button *ngFor="let cmd of suggestionButtons" type="button" (click)="executeButtonCommand(cmd)">{{ cmd }}</button>
+    </nav>
+
+    <footer *ngIf="variant === 'modern'" class="statusbar">
+      <span class="mode">{{ isEn ? 'PORTFOLIO' : 'PORTFÓLIO' }}</span>
+      <span>{{ isEn ? 'theme' : 'tema' }}: {{ currentTheme.name }}</span>
+      <span class="spacer"></span>
+      <span>{{ isEn ? 'tab completes · ↑ history' : 'tab completa · ↑ histórico' }}</span>
+    </footer>
+
+    <!-- CRT: efeitos por cima da tela e medidor de largura de caractere -->
+    <ng-container *ngIf="variant === 'crt'">
+      <div class="crt-scanlines" aria-hidden="true"></div>
+      <div class="crt-vignette" aria-hidden="true"></div>
+      <span #crtMeasure class="crt-measure" aria-hidden="true">0000000000</span>
+    </ng-container>
   </div>
 
-  <!-- Command input area -->
-  <div class="input-line">
-    <span class="prompt">{{prompt}}</span>
-    <input #commandInput type="text" [(ngModel)]="currentCommand"
-           (keydown)="handleKeyDown($event)"
-           class="command-input"
-           [placeholder]="languageService.getCurrentLanguage() === 'en' ? 'Type a command...' : 'Digite um comando...'"
-           autofocus>
-    <span class="terminal-caret"></span>
-  </div>
-
-  <!-- Command button suggestions -->
-  <div class="command-suggestions">
-    <button *ngFor="let cmd of suggestionButtons"
-            (click)="executeButtonCommand(cmd)"
-            class="suggestion-btn">
-      {{cmd}}
-    </button>
-  </div>
-
-  <!-- Image Modal -->
-  <div *ngIf="imageModal.visible" class="image-modal" (click)="closeImageModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <button class="modal-close" (click)="closeImageModal()">×</button>
-      <h3 class="modal-title">{{imageModal.title}}</h3>
-      <img [src]="imageModal.src" [alt]="imageModal.title" class="modal-image">
+  <!-- Imagem ampliada -->
+  <div *ngIf="imageModal.visible" class="modal" (click)="closeImageModal()">
+    <div class="modal-body" role="dialog" aria-modal="true" [attr.aria-label]="imageModal.title" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <span>{{ imageModal.title }}</span>
+        <button type="button" (click)="closeImageModal()" [attr.aria-label]="isEn ? 'Close' : 'Fechar'">×</button>
+      </div>
+      <img [src]="imageModal.src" [alt]="imageModal.title">
     </div>
   </div>
 </div>

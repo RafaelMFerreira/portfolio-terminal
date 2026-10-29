@@ -1,10 +1,15 @@
-import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import {
+  AfterViewInit, Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, ViewChild
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { PortfolioService } from '../../services/portfolio.service';
 import { LanguageService } from '../../services/language.service';
-import { TerminalTheme } from '../../models/theme';
+import { Phosphor, TerminalTheme } from '../../models/theme';
 import { ThemeService } from '../../services/theme.service';
+import { TextLink, visualResponseToText } from '../../services/text-box';
+import { buildContactMailto, ContactDraft } from '../../services/contact';
 
 export interface TerminalCommand {
   name: string;
@@ -18,14 +23,50 @@ export interface VisualResponse {
   data: any;
 }
 
-export interface Project {
-  title: string;
-  description: string;
-  technologies: string[];
-  imageUrl: string;
-  demoUrl?: string;
-  codeUrl?: string;
+export type TerminalVariant = 'modern' | 'crt';
+
+interface OutputLine {
+  kind: 'command' | 'text';
+  text: string;
 }
+
+/** Comandos em português também funcionam quando digitados. */
+const COMMAND_ALIASES: Record<string, string> = {
+  projetos: 'projects',
+  habilidades: 'skills',
+  sobre: 'about',
+  'experiência': 'experience',
+  experiencia: 'experience',
+  contato: 'contact',
+  tema: 'theme',
+  idioma: 'language',
+  ajuda: 'help',
+  limpar: 'clear',
+  ver: 'view',
+  'currículo': 'download',
+  curriculo: 'download'
+};
+
+/** Comandos de ajuste: mantêm o painel aberto. */
+const SETTINGS_COMMANDS = ['theme', 'language', 'lang'];
+
+const PT_DESCRIPTIONS: Record<string, string> = {
+  echo: 'Exibir uma mensagem',
+  date: 'Mostrar data e hora atuais',
+  whoami: 'Mostrar o usuário atual',
+  clear: 'Limpar o terminal',
+  help: 'Mostrar os comandos disponíveis',
+  reboot: 'Reiniciar o sistema e ver a animação de boot',
+  projects: 'Mostrar meus projetos (uso: projects [id])',
+  skills: 'Mostrar minhas habilidades',
+  about: 'Mostrar informações sobre mim',
+  experience: 'Mostrar minha experiência profissional',
+  contact: 'Entrar em contato',
+  download: 'Baixar meu currículo',
+  view: 'Trocar a visualização (uso: view [moderno|crt|simples])',
+  theme: 'Mudar o tema de cores (uso: theme [nome])',
+  language: 'Mudar o idioma (uso: language [en|pt])'
+};
 
 @Component({
   selector: 'app-terminal',
@@ -34,653 +75,454 @@ export interface Project {
   templateUrl: './terminal.component.html',
   styleUrls: ['./terminal.component.css']
 })
-export class TerminalComponent implements OnInit {
+export class TerminalComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() prompt = 'visitor@portfolio:~$';
   @Input() initialMessage = 'Welcome to the terminal. Type "help" for available commands.';
-  @Input() enableCrtEffect = true;
   @Input() commands: TerminalCommand[] = [];
+  @Input() variant: TerminalVariant = 'modern';
 
-  @Output() commandExecuted = new EventEmitter<{command: string, output: string | VisualResponse}>();
+  @Output() commandExecuted = new EventEmitter<{ command: string, output: string | VisualResponse }>();
   @Output() themeChanged = new EventEmitter<TerminalTheme>();
 
-  @ViewChild('terminalOutput', { static: true }) terminalOutput!: ElementRef;
-  @ViewChild('commandInput', { static: true }) commandInput!: ElementRef;
-  @ViewChild('terminalContainer', { static: true }) terminalContainer!: ElementRef;
+  @ViewChild('terminalOutput', { static: true }) terminalOutput!: ElementRef<HTMLElement>;
+  @ViewChild('commandInput', { static: true }) commandInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('crtMeasure') crtMeasure?: ElementRef<HTMLElement>;
 
   currentCommand = '';
   commandHistory: string[] = [];
   historyIndex = -1;
+  lines: OutputLine[] = [];
   currentVisualResponse: VisualResponse | null = null;
-  suggestionButtonsEn: string[] = ['projects', 'skills', 'about', 'experience', 'contact', 'theme', 'language'];
-  suggestionButtonsPt: string[] = ['projetos', 'habilidades', 'sobre', 'experiência', 'contato', 'tema', 'language'];
   currentExperienceIndex = 0;
-  
-  // Image modal properties
-  imageModal = {
-    visible: false,
-    src: '',
-    title: ''
-  };
+
+  /** CRT: a resposta atual em texto com moldura. */
+  crtBox: string[] = [];
+  crtLinks: TextLink[] = [];
+  private crtCols = 76;
+
+  contactDraft: ContactDraft = { name: '', email: '', message: '' };
+
+  suggestionButtonsEn: string[] = ['help', 'about', 'projects', 'skills', 'experience', 'contact', 'theme'];
+  suggestionButtonsPt: string[] = ['ajuda', 'sobre', 'projetos', 'habilidades', 'experiência', 'contato', 'tema'];
+
+  imageModal = { visible: false, src: '', title: '' };
 
   themes: TerminalTheme[] = [];
   currentTheme!: TerminalTheme;
+  phosphors: Phosphor[] = [];
+  currentPhosphor!: Phosphor;
+
+  private subs: Subscription[] = [];
 
   constructor(
     private portfolioService: PortfolioService,
     public languageService: LanguageService,
     public themeService: ThemeService
-  ) {  }
+  ) {}
+
+  get isEn(): boolean {
+    return this.languageService.getCurrentLanguage() === 'en';
+  }
 
   ngOnInit(): void {
     this.themes = this.themeService.getThemes();
-    this.currentTheme = this.themes[0];
-  
-    // Load saved theme from localStorage if it exists
-    const savedTheme = localStorage.getItem('terminal-theme');
-    if (savedTheme) {
-      const theme = this.themes.find(t => t.name === savedTheme);
-      if (theme) {
-        this.currentTheme = theme;
-      }
-    }
+    this.currentTheme = this.themeService.getStored();
+    this.phosphors = this.themeService.getPhosphors();
+    this.currentPhosphor = this.themeService.getStoredPhosphor();
+    this.themeService.apply(this.currentTheme);
 
-    // Apply initial theme
-    this.applyTheme(this.currentTheme);
-
-    // Add initial message
     this.addOutput(this.initialMessage);
 
-    // Subscribe to language changes
-    this.languageService.currentLanguage$.subscribe(() => {
-      // If there's a visual response active, refresh it with the new language
-      if (this.currentVisualResponse) {
-        const type = this.currentVisualResponse.type;
-        switch (type) {
-          case 'project':
-            this.currentVisualResponse.data = this.portfolioService.getProjects();
-            break;
-          case 'skills':
-            this.currentVisualResponse.data = this.portfolioService.getSkills();
-            break;
-          case 'about':
-            this.currentVisualResponse.data = this.portfolioService.getAboutInfo();
-            break;
-          case 'experience':
-            this.currentVisualResponse.data = this.portfolioService.getExperience();
-            break;
-          case 'contact':
-            this.currentVisualResponse.data = this.portfolioService.getContactInfo();
-            break;
-        }
+    this.subs.push(this.languageService.currentLanguage$.subscribe(() => this.refreshVisualData()));
+
+    // Comandos da interface, ligados a esta tela. O array de comandos é compartilhado
+    // e o terminal é recriado ao trocar de visualização: cada tela registra os seus.
+    this.registerOwn({
+      name: 'theme',
+      description: 'Change the color theme (usage: theme [name])',
+      action: (args) => this.handleThemeCommand(args)
+    });
+    this.registerOwn({
+      name: 'language',
+      description: 'Change the language (usage: language [en|pt])',
+      action: (args) => this.handleLanguageCommand(args)
+    });
+    this.registerOwn({
+      name: 'lang',
+      description: 'Alias for language',
+      action: (args) => this.handleLanguageCommand(args)
+    });
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.focusInput(), 0);
+    if (this.variant === 'crt') {
+      const fonts = (document as any).fonts;
+      if (fonts?.ready) {
+        fonts.ready.then(() => this.measureCrtColumns());
+      } else {
+        this.measureCrtColumns();
       }
-    });
-
-    // Add UI-specific commands
-    this.commands.push(
-      {
-        name: 'theme',
-        description: 'Change the terminal theme (usage: theme [name])',
-        action: (args) => this.handleThemeCommand(args)
-      },
-      {
-        name: 'language',
-        description: 'Change the current language (usage: language [en|pt])',
-        action: (args) => this.handleLanguageCommand(args)
-      },
-      {
-        name: 'lang',
-        description: 'Alias for language command',
-        action: (args) => this.handleLanguageCommand(args)
-      } 
-    );
-
-    // Focus the input
-    setTimeout(() => {
-      this.commandInput.nativeElement.focus();
-    }, 0);
-
-    this.commandInput.nativeElement.addEventListener('focus', () => {
-      this.updateCaretPosition();
-    });
-
-    this.commandInput.nativeElement.addEventListener('click', () => {
-      this.updateCaretPosition();
-    });
-
-    this.commandInput.nativeElement.addEventListener('mouseup', () => {
-      this.updateCaretPosition();
-    });
-
-    // Initial update
-    setTimeout(() => this.updateCaretPosition(), 100);
+    }
   }
 
-  updateCaretPosition(): void {
-    const input = this.commandInput.nativeElement;
-    const caretElement = this.terminalContainer.nativeElement.querySelector('.terminal-caret');
-    if (!caretElement) return;
-
-    // Get input metrics
-    const inputStyles = window.getComputedStyle(input);
-    const fontFamily = inputStyles.fontFamily;
-    const fontSize = inputStyles.fontSize;
-
-    // Create a measuring element with the same styling
-    const measure = document.createElement('span');
-    measure.style.fontFamily = fontFamily;
-    measure.style.fontSize = fontSize;
-    measure.style.visibility = 'hidden';
-    measure.style.position = 'absolute';
-    measure.style.whiteSpace = 'pre';
-
-    // Add to DOM to measure
-    document.body.appendChild(measure);
-
-    // Measure text up to cursor position
-    const cursorPos = input.selectionStart || 0;
-    const textBeforeCursor = input.value.substring(0, cursorPos);
-    measure.textContent = textBeforeCursor;
-
-    // Calculate position
-    const textWidth = measure.offsetWidth;
-
-    // Clean up
-    document.body.removeChild(measure);
-
-    // Position caret
-    const promptElement = this.terminalContainer.nativeElement.querySelector('.prompt');
-    const promptWidth = promptElement.offsetWidth;
-
-    caretElement.style.left = `${promptWidth + textWidth + 8}px`;
+  ngOnDestroy(): void {
+    this.subs.forEach(s => s.unsubscribe());
   }
+
+  @HostListener('window:resize')
+  onResize(): void {
+    if (this.variant === 'crt') this.measureCrtColumns();
+  }
+
+  /**
+   * Registra (ou substitui) um comando desta tela. Substituir é importante: o array é
+   * compartilhado entre as telas, e um comando antigo continuaria apontando para a
+   * tela anterior (ex.: "theme" listando fósforos da CRT no terminal moderno).
+   */
+  private registerOwn(command: TerminalCommand): void {
+    const index = this.commands.findIndex(c => c.name === command.name);
+    if (index >= 0) {
+      this.commands[index] = command;
+    } else {
+      this.commands.push(command);
+    }
+  }
+
+  focusInput(): void {
+    this.commandInput?.nativeElement.focus();
+  }
+
+  /** Clique no fundo da área do terminal foca a linha de comando (sem roubar cliques de links e botões). */
+  onScrollClick(event: MouseEvent): void {
+    if (event.target === event.currentTarget && !window.getSelection()?.toString()) {
+      this.focusInput();
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Teclado e execução
+  // ---------------------------------------------------------------------------
 
   handleKeyDown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       if (this.imageModal.visible) {
         this.closeImageModal();
-        event.preventDefault();
-        return;
+      } else if (this.currentVisualResponse) {
+        this.closeVisualResponse();
       }
-      if (this.currentVisualResponse) {
-        this.currentVisualResponse = null;
-        this.scrollToBottom();
-        event.preventDefault();
-        return;
-      }
+      event.preventDefault();
+      return;
     }
-    
+
     if (event.key === 'Enter') {
       this.executeCommand();
+    } else if (event.key === 'Tab') {
+      event.preventDefault();
+      this.completeCommand();
     } else if (event.key === 'ArrowUp') {
       event.preventDefault();
       this.navigateHistory(-1);
     } else if (event.key === 'ArrowDown') {
       event.preventDefault();
       this.navigateHistory(1);
-    } else if (event.key === 'ArrowLeft' && this.currentVisualResponse?.type === 'experience') {
+    } else if (event.key === 'ArrowLeft' && !this.currentCommand && this.currentVisualResponse?.type === 'experience') {
       this.navigateExperience(-1);
-    } else if (event.key === 'ArrowRight' && this.currentVisualResponse?.type === 'experience') {
+    } else if (event.key === 'ArrowRight' && !this.currentCommand && this.currentVisualResponse?.type === 'experience') {
       this.navigateExperience(1);
     }
-    setTimeout(() => this.updateCaretPosition(), 10);
+  }
+
+  /** Tab completa o nome do comando (ou mostra as opções, se houver várias). */
+  completeCommand(): void {
+    const typed = this.currentCommand.trimStart();
+    if (!typed || typed.includes(' ')) return;
+    const names = [
+      ...this.commands.map(c => c.name),
+      ...Object.keys(COMMAND_ALIASES)
+    ].filter((n, i, all) => all.indexOf(n) === i);
+    const matches = names.filter(n => n.startsWith(typed.toLowerCase()));
+    if (matches.length === 1) {
+      this.currentCommand = matches[0] + ' ';
+    } else if (matches.length > 1) {
+      this.addOutput(matches.join('   '));
+    }
   }
 
   executeCommand(): void {
     const commandText = this.currentCommand.trim();
+    if (!commandText) return;
 
-    if (commandText) {
-      // Add to history
-      this.commandHistory.push(commandText);
-      this.historyIndex = this.commandHistory.length;
+    this.commandHistory.push(commandText);
+    this.historyIndex = this.commandHistory.length;
+    this.lines.push({ kind: 'command', text: commandText });
 
-      // Display the command
-      this.addOutput(`${this.prompt} ${commandText}`, 'command-history');
+    const [rawCmd, ...args] = commandText.split(/\s+/);
+    const cmd = COMMAND_ALIASES[rawCmd.toLowerCase()] ?? rawCmd.toLowerCase();
 
-      // Process the command
-      const [cmd, ...args] = commandText.split(' ');
-      let output: string | VisualResponse = 'Command not found. Type "help" for available commands.';
-
-      // Check built-in commands
-      if (cmd === 'clear') {
-        this.clearTerminal();
-        output = '';
-      } else {
-        // Check custom commands
-        const command = this.commands.find(c => c.name === cmd);
-        if (command) {
-          try {
-            output = command.action(args);
-            this.handleCommandOutput(output, commandText);
-          } catch (error) {
-            output = `Error executing command: ${error}`;
-            this.currentVisualResponse = null;
-            this.addOutput(output as string);
-          }
-        } else {
-          this.addOutput(output as string);
+    if (cmd === 'clear') {
+      this.clearTerminal();
+    } else if (cmd === 'help') {
+      this.currentVisualResponse = null;
+      this.addOutput(this.getHelpText());
+      this.commandExecuted.emit({ command: commandText, output: '' });
+    } else {
+      const command = this.commands.find(c => c.name === cmd);
+      if (command) {
+        try {
+          // Ajustes (tema, idioma) não fecham o painel aberto: dá para ver a mudança nele.
+          const keepPanel = SETTINGS_COMMANDS.includes(cmd);
+          this.handleCommandOutput(command.action(args), commandText, keepPanel);
+        } catch (error) {
+          this.currentVisualResponse = null;
+          this.addOutput(`${this.isEn ? 'Error executing command' : 'Erro ao executar o comando'}: ${error}`);
         }
+      } else {
+        this.addOutput(this.isEn
+          ? `Command not found: ${rawCmd}. Type "help" for available commands.`
+          : `Comando não encontrado: ${rawCmd}. Digite "ajuda" para ver os comandos.`);
       }
-
-      this.currentCommand = '';
-      setTimeout(() => this.commandInput.nativeElement.focus(), 0);
     }
+
+    this.currentCommand = '';
+    setTimeout(() => this.focusInput(), 0);
   }
 
-  private handleCommandOutput(output: string | VisualResponse, commandText: string): void {
+  private handleCommandOutput(output: string | VisualResponse, commandText: string, keepPanel = false): void {
     if (typeof output !== 'string') {
       this.currentVisualResponse = output;
-      this.addOutput(`Displaying ${output.type} information...`);
-      
-      // Reset experience index when showing experience
-      if (output.type === 'experience') {
-        this.currentExperienceIndex = 0;
-      }
-      
-      // Apply current theme to visual response elements after they render
-      setTimeout(() => {
-        // Refresh animations for the new visual response
-        this.refreshVisualResponseAnimations();
-        // Ensure terminal is scrolled to bottom after visual response renders
-        this.scrollToBottom();
-      }, 50);
+      if (output.type === 'experience') this.currentExperienceIndex = 0;
+      this.renderCrt();
+      this.scrollToBottom();
     } else if (output) {
-      this.currentVisualResponse = null;
+      if (!keepPanel) this.currentVisualResponse = null;
       this.addOutput(output);
     }
-
-    this.commandExecuted.emit({command: commandText, output});
+    this.commandExecuted.emit({ command: commandText, output });
   }
 
   executeButtonCommand(command: string): void {
-    // Map Portuguese commands to English commands
-    let cmdToExecute = command;
-    if (this.languageService.getCurrentLanguage() === 'pt') {
-      const commandMap: {[key: string]: string} = {
-        'projetos': 'projects',
-        'habilidades': 'skills',
-        'sobre': 'about',
-        'experiência': 'experience',
-        'contato': 'contact',
-        'tema': 'theme'
-      };
-      cmdToExecute = commandMap[command] || command;
+    let cmd = COMMAND_ALIASES[command] ?? command;
+    if (cmd === 'theme') {
+      // botão de tema: avança para o próximo da lista (fósforos na CRT, temas no moderno)
+      if (this.variant === 'crt') {
+        const i = this.phosphors.findIndex(p => p.name === this.currentPhosphor.name);
+        cmd = `theme ${this.phosphors[(i + 1) % this.phosphors.length].name}`;
+      } else {
+        const i = this.themes.findIndex(t => t.name === this.currentTheme.name);
+        cmd = `theme ${this.themes[(i + 1) % this.themes.length].name}`;
+      }
     }
-
-    // Special handling for language button
-    if (cmdToExecute === 'language') {
-      const newLang = this.languageService.getCurrentLanguage() === 'en' ? 'pt' : 'en';
-      this.currentCommand = `language ${newLang}`;
-    } 
-    // Special handling for theme button
-    else if (cmdToExecute === 'theme') {
-      const currentThemeIndex = this.themes.findIndex(t => t.name === this.currentTheme.name);
-      const nextThemeIndex = (currentThemeIndex + 1) % this.themes.length;
-      this.currentCommand = `theme ${this.themes[nextThemeIndex].name}`;
-    }
-    else {
-      this.currentCommand = cmdToExecute;
-    }
-    
+    this.currentCommand = cmd;
     this.executeCommand();
   }
 
   navigateHistory(direction: number): void {
     const newIndex = this.historyIndex + direction;
-
     if (newIndex >= 0 && newIndex <= this.commandHistory.length) {
       this.historyIndex = newIndex;
-      this.currentCommand = newIndex === this.commandHistory.length
-        ? ''
-        : this.commandHistory[newIndex];
+      this.currentCommand = newIndex === this.commandHistory.length ? '' : this.commandHistory[newIndex];
     }
   }
 
   clearTerminal(): void {
-    this.terminalOutput.nativeElement.innerHTML = '';
+    this.lines = [];
+    this.currentVisualResponse = null;
   }
 
-  addOutput(text: string, className: string = ''): void {
-    const element = document.createElement('div');
-    element.className = className;
-    
-    // Special handling for command history to color the prompt differently
-    if (className === 'command-history') {
-      // Extract the prompt portion and the command portion
-      const escapedPrompt = this.prompt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    
-      // Create a regex that will match the prompt followed by a space and then the command
-      const promptRegex = new RegExp(`^(${escapedPrompt})\\s+(.*)$`);
-      const match = text.match(promptRegex);
-      
-      if (match && match.length >= 3) {
-        const promptPart = match[1];
-        const commandPart = match[2];
-        
-        // Create HTML with different styling for prompt and command
-        // For some reason the class "history-prompt" color in css is not applying
-        // So apply the color directly on it
-        element.innerHTML = `<span style="color: var(--terminal-prompt-color)" "class="history-prompt">${promptPart}</span> ${commandPart.replace(/\n/g, '<br>')}`;
-      } else {
-        // Fallback if regex doesn't match
-        element.innerHTML = text.replace(/\n/g, '<br>');
-      }
-    } else {
-      // Normal output without special formatting
-      element.innerHTML = text.replace(/\n/g, '<br>');
-    }
-    
-    this.terminalOutput.nativeElement.appendChild(element);
+  /** Texto puro: o Angular escapa na renderização, então nada digitado vira HTML. */
+  addOutput(text: string): void {
+    this.lines.push({ kind: 'text', text });
     this.scrollToBottom();
   }
 
   getHelpText(): string {
-    const isEnglish = this.languageService.getCurrentLanguage() === 'en';
-    
-    let helpText = isEnglish ? 'Available commands:\n' : 'Comandos disponíveis:\n';
-    helpText += isEnglish 
-      ? '- clear: Clear the terminal\n' 
-      : '- clear: Limpar o terminal\n';
-    helpText += isEnglish 
-      ? '- help: Display this help message\n' 
-      : '- help: Exibir esta mensagem de ajuda\n';
-
-    this.commands.forEach(cmd => {
-      // Skip the lang alias in the help text to avoid duplication
-      if (cmd.name === 'lang') return;
-      
-      let description = cmd.description;
-      
-      // Translate common command descriptions if in Portuguese
-      if (!isEnglish) {
-        switch (cmd.name) {
-          case 'projects':
-            description = 'Mostrar meus projetos';
-            break;
-          case 'skills':
-            description = 'Mostrar minhas habilidades';
-            break;
-          case 'about':
-            description = 'Mostrar informações sobre mim';
-            break;
-          case 'experience':
-            description = 'Mostrar minha experiência profissional';
-            break;
-          case 'contact':
-            description = 'Mostrar informações de contato';
-            break;
-          case 'theme':
-            description = 'Mudar o tema do terminal (uso: theme [nome])';
-            break;
-          case 'language':
-            description = 'Mudar o idioma atual (uso: language [en|pt])';
-            break;
-        }
-      }
-      
-      helpText += `- ${cmd.name}: ${description}\n`;
-    });
-
-    return helpText;
+    const en = this.isEn;
+    const visible = this.commands.filter(c => c.name !== 'lang');
+    const width = Math.max(...visible.map(c => c.name.length), 5) + 2;
+    let text = en ? 'Available commands:\n\n' : 'Comandos disponíveis:\n\n';
+    for (const cmd of visible) {
+      const description = en ? cmd.description : (PT_DESCRIPTIONS[cmd.name] ?? cmd.description);
+      text += `  ${cmd.name.padEnd(width)}${description}\n`;
+    }
+    text += en
+      ? '\nTab completes a command. ↑ ↓ browse history. Esc closes a panel.'
+      : '\nTab completa o comando. ↑ ↓ percorrem o histórico. Esc fecha o painel.';
+    return text;
   }
 
+  // ---------------------------------------------------------------------------
+  // Tema e idioma
+  // ---------------------------------------------------------------------------
+
   handleThemeCommand(args: string[]): string {
+    if (this.variant === 'crt') return this.handlePhosphorCommand(args);
     if (!args.length || args[0] === 'list') {
-      return 'Available themes:\n' + this.themes.map(t => `- ${t.name}`).join('\n');
+      return (this.isEn ? 'Available themes:\n' : 'Temas disponíveis:\n') +
+        this.themes.map(t => `  ${t.name}${t.name === this.currentTheme.name ? '  *' : ''}`).join('\n');
     }
-    
-    const themeName = args[0];
-    const theme = this.themes.find(t => t.name === themeName);
-
-    if (theme) {
-      // Store current visual response type and data if any
-      const currentResponse = this.currentVisualResponse;
-
-      this.currentTheme = theme;
-      this.applyTheme(theme);
-      
-      // Save theme preference to localStorage
-      localStorage.setItem('terminal-theme', theme.name);
-      
-      // If there was a visual response, restore it after theme change
-      if (currentResponse) {
-        setTimeout(() => {
-          this.currentVisualResponse = currentResponse;
-            this.scrollToBottom();
-        }, 50);
-      }
-      
-      this.themeChanged.emit(theme);
-      return `Theme changed to ${theme.name}`;
+    const theme = this.themes.find(t => t.name === args[0].toLowerCase());
+    if (!theme) {
+      return this.isEn
+        ? `Theme "${args[0]}" not found. Use "theme list" to see the options.`
+        : `Tema "${args[0]}" não encontrado. Use "theme list" para ver as opções.`;
     }
+    this.currentTheme = theme;
+    this.themeService.apply(theme);
+    this.themeService.store(theme);
+    this.themeChanged.emit(theme);
+    return this.isEn ? `Theme changed to ${theme.name}` : `Tema alterado para ${theme.name}`;
+  }
 
-    this.scrollToBottom();
-    return `Theme "${themeName}" not found. Use "theme list" to see available themes.`;
+  /** Na CRT, "theme" escolhe a cor do fósforo. */
+  private handlePhosphorCommand(args: string[]): string {
+    if (!args.length || args[0] === 'list') {
+      return (this.isEn ? 'Phosphor colors:\n' : 'Cores de fósforo:\n') +
+        this.phosphors.map(p => `  ${p.name}${p.name === this.currentPhosphor.name ? '  *' : ''}`).join('\n');
+    }
+    const phosphor = this.phosphors.find(p => p.name === args[0].toLowerCase());
+    if (!phosphor) {
+      return this.isEn
+        ? `Phosphor "${args[0]}" not found. Options: ${this.phosphors.map(p => p.name).join(', ')}`
+        : `Fósforo "${args[0]}" não encontrado. Opções: ${this.phosphors.map(p => p.name).join(', ')}`;
+    }
+    this.currentPhosphor = phosphor;
+    this.themeService.applyPhosphor(phosphor);
+    this.themeService.storePhosphor(phosphor);
+    return this.isEn ? `Phosphor changed to ${phosphor.name}` : `Fósforo alterado para ${phosphor.name}`;
   }
 
   handleLanguageCommand(args: string[]): string {
+    const current = this.languageService.getCurrentLanguage();
     if (!args.length || args[0] === 'list') {
-      const currentLang = this.languageService.getCurrentLanguage();
-      this.scrollToBottom();  
-      return `Available languages:\n- en (English) ${currentLang === 'en' ? '[current]' : ''}\n- pt (Português) ${currentLang === 'pt' ? '[current]' : ''}`;
+      return `en (English)${current === 'en' ? '  *' : ''}\npt (Português)${current === 'pt' ? '  *' : ''}`;
     }
-
     const lang = args[0].toLowerCase();
     if (lang === 'en' || lang === 'pt') {
-      // Store current visual response type and data if any
-      const currentResponse = this.currentVisualResponse;
-      
       this.languageService.setLanguage(lang);
-      
-      // If there was a visual response, restore it after language change
-      if (currentResponse) {
-        setTimeout(() => {
-          this.currentVisualResponse = currentResponse;
-            this.scrollToBottom();  
-        }, 50);
+      return lang === 'en' ? 'Language changed to English' : 'Idioma alterado para Português';
+    }
+    return current === 'en'
+      ? `Language "${args[0]}" not supported. Options: en, pt`
+      : `Idioma "${args[0]}" não suportado. Opções: en, pt`;
+  }
+
+  /** Ao trocar de idioma, recarrega os dados do painel aberto. */
+  private refreshVisualData(): void {
+    const response = this.currentVisualResponse;
+    if (!response) return;
+    switch (response.type) {
+      case 'project': {
+        // mantém o filtro "projects <id>" se houver um só
+        const ids = (response.data as any[]).map(p => p.id);
+        response.data = this.portfolioService.getProjects().filter(p => ids.includes(p.id));
+        break;
       }
-    
-      return lang === 'en' 
-        ? 'Language changed to English' 
-        : 'Idioma alterado para Português';
+      case 'skills': response.data = this.portfolioService.getSkills(); break;
+      case 'about': response.data = this.portfolioService.getAboutInfo(); break;
+      case 'experience': response.data = this.portfolioService.getExperience(); break;
+      case 'contact': response.data = this.portfolioService.getContactInfo(); break;
     }
-
-    this.scrollToBottom();      
-    const currentLang = this.languageService.getCurrentLanguage();
-    return currentLang === 'en' 
-      ? `Language "${args[0]}" not supported. Available options: en, pt`
-      : `Idioma "${args[0]}" não suportado. Opções disponíveis: en, pt`;
+    this.renderCrt();
   }
 
-  applyTheme(theme: TerminalTheme): void {
-    document.documentElement.style.setProperty('--terminal-bg', theme.background);
-    document.documentElement.style.setProperty('--terminal-fg', theme.foreground);
-    document.documentElement.style.setProperty('--terminal-font', theme.fontFamily);
-    document.documentElement.style.setProperty('--terminal-accent', theme.foreground);
-    document.documentElement.style.setProperty('--terminal-accent-hover', this.adjustColor(theme.foreground, 20));
-    document.documentElement.style.setProperty('--terminal-input-bg', this.adjustColor(theme.background, 20));
-    document.documentElement.style.setProperty('--terminal-prompt-color', theme.promptColor);
-    
-    // Update transparent accent colors
-    const transparentAccent = this.createTransparentColor(theme.foreground, 0.2);
-    const borderLight = this.createTransparentColor(theme.foreground, 0.3);
-    document.documentElement.style.setProperty('--terminal-accent-transparent', transparentAccent);
-    document.documentElement.style.setProperty('--terminal-border-light', borderLight);
+  // ---------------------------------------------------------------------------
+  // CRT
+  // ---------------------------------------------------------------------------
 
-    // Force a style recalculation by accessing offsetHeight
-    document.documentElement.offsetHeight;
-    const input = this.commandInput.nativeElement;
-    input.style.caretColor = 'transparent';
-
-  }
-  
-  // Helper function to adjust color brightness
-  private adjustColor(color: string, amount: number): string {
-    // Handle hex colors
-    if (color.startsWith('#')) {
-      return this.adjustHexColor(color, amount);
+  /** Quantos caracteres cabem por linha na área de saída da CRT. */
+  private measureCrtColumns(): void {
+    const output = this.terminalOutput?.nativeElement;
+    const probe = this.crtMeasure?.nativeElement;
+    if (!output || !probe) return;
+    const charWidth = probe.getBoundingClientRect().width / 10;
+    if (!charWidth) return;
+    const style = getComputedStyle(output);
+    const usable = output.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    const cols = Math.floor(usable / charWidth);
+    const next = Math.max(36, Math.min(96, cols));
+    if (next !== this.crtCols) {
+      this.crtCols = next;
+      this.renderCrt();
     }
-    
-    // Handle rgb/rgba colors
-    if (color.startsWith('rgb')) {
-      return this.adjustRgbColor(color, amount);
-    }
-    
-    return color;
-  }
-  
-  private adjustHexColor(hex: string, amount: number): string {
-    let r = parseInt(hex.slice(1, 3), 16);
-    let g = parseInt(hex.slice(3, 5), 16);
-    let b = parseInt(hex.slice(5, 7), 16);
-    
-    r = Math.max(0, Math.min(255, r + amount));
-    g = Math.max(0, Math.min(255, g + amount));
-    b = Math.max(0, Math.min(255, b + amount));
-    
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-  }
-  
-  private adjustRgbColor(rgb: string, amount: number): string {
-    const rgbMatch = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(?:\.\d+)?))?\)/);
-    if (!rgbMatch) return rgb;
-    
-    let r = parseInt(rgbMatch[1]);
-    let g = parseInt(rgbMatch[2]);
-    let b = parseInt(rgbMatch[3]);
-    const a = rgbMatch[4] || '1';
-    
-    r = Math.max(0, Math.min(255, r + amount));
-    g = Math.max(0, Math.min(255, g + amount));
-    b = Math.max(0, Math.min(255, b + amount));
-    
-    return `rgba(${r}, ${g}, ${b}, ${a})`;
   }
 
-  // Helper method to create transparent colors
-  private createTransparentColor(color: string, opacity: number): string {
-    // For hex colors
-    if (color.startsWith('#')) {
-      const r = parseInt(color.slice(1, 3), 16);
-      const g = parseInt(color.slice(3, 5), 16);
-      const b = parseInt(color.slice(5, 7), 16);
-      return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  private renderCrt(): void {
+    if (this.variant !== 'crt' || !this.currentVisualResponse) {
+      this.crtBox = [];
+      this.crtLinks = [];
+      return;
     }
-    
-    // For rgb colors
-    if (color.startsWith('rgb(')) {
-      const rgbMatch = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-      if (rgbMatch) {
-        const r = parseInt(rgbMatch[1]);
-        const g = parseInt(rgbMatch[2]);
-        const b = parseInt(rgbMatch[3]);
-        return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-      }
-    }
-    
-    // For rgba colors
-    if (color.startsWith('rgba(')) {
-      const rgbaMatch = color.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*[\d.]+\)/);
-      if (rgbaMatch) {
-        const r = parseInt(rgbaMatch[1]);
-        const g = parseInt(rgbaMatch[2]);
-        const b = parseInt(rgbaMatch[3]);
-        return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-      }
-    }
-    
-    // Default fallback
-    return `rgba(0, 255, 0, ${opacity})`;
+    const r = this.currentVisualResponse;
+    // Experiência na CRT: mostra todas as posições na mesma caixa.
+    const result = visualResponseToText(r.type, r.data, this.languageService.getCurrentLanguage(), this.crtCols);
+    this.crtBox = result.lines;
+    this.crtLinks = result.links;
   }
 
-  // Experience navigation methods
+  // ---------------------------------------------------------------------------
+  // Painéis
+  // ---------------------------------------------------------------------------
+
   navigateExperience(direction: number): void {
-    if (!this.currentVisualResponse || this.currentVisualResponse.type !== 'experience') return;
-    
-    const newIndex = this.currentExperienceIndex + direction;
-    const maxIndex = this.currentVisualResponse.data.length - 1;
-    
-    if (newIndex >= 0 && newIndex <= maxIndex) {
-      // Apply animation refresh
-      this.refreshVisualResponseAnimations();
-      this.currentExperienceIndex = newIndex;
+    if (this.currentVisualResponse?.type !== 'experience') return;
+    const next = this.currentExperienceIndex + direction;
+    if (next >= 0 && next < this.currentVisualResponse.data.length) {
+      this.currentExperienceIndex = next;
     }
   }
-  
+
   setExperienceIndex(index: number): void {
-    if (!this.currentVisualResponse || this.currentVisualResponse.type !== 'experience') return;
-    
-    if (index >= 0 && index < this.currentVisualResponse.data.length && index !== this.currentExperienceIndex) {
-      // Apply animation refresh
-      this.refreshVisualResponseAnimations();
+    if (this.currentVisualResponse?.type !== 'experience') return;
+    if (index >= 0 && index < this.currentVisualResponse.data.length) {
       this.currentExperienceIndex = index;
     }
   }
-  
-  private refreshVisualResponseAnimations(): void {
-    if (!this.currentVisualResponse) return;
-    
-    const container = this.terminalContainer.nativeElement;
-    let elements: NodeListOf<HTMLElement>;
-    
-    // Select elements based on visual response type
-    switch (this.currentVisualResponse.type) {
-      case 'project':
-        elements = container.querySelectorAll('.project-item .card, .tech-tag, .card-actions a');
-        break;
-      case 'skills':
-        elements = container.querySelectorAll('.skill-category, .skill-bar');
-        break;
-      case 'about':
-        elements = container.querySelectorAll('.profile-photo, .about-text h2, .about-text h3, .about-text p');
-        break;
-      case 'contact':
-        elements = container.querySelectorAll('.contact-info h2, .contact-info p, .contact-item, .form-input, .form-textarea, .form-button');
-        break;
-      case 'experience':
-        elements = container.querySelectorAll('.experience-card, .job-responsibilities li');
-        break;
-      default:
-        return;
-    }
-    
-    // Reset animations for all elements
-    elements.forEach((element: HTMLElement) => {
-      const originalAnimation = window.getComputedStyle(element).animation;
-      element.style.animation = 'none';
-      // Force reflow
-      void element.offsetWidth;
-      // Restore original animation or use fadeIn as fallback
-      element.style.animation = originalAnimation || 'fadeIn 0.4s ease';
-    });
+
+  sendContact(event: Event): void {
+    event.preventDefault();
+    const contact = this.portfolioService.getContactInfo();
+    window.location.href = buildContactMailto(contact.email, this.contactDraft);
   }
 
   openImageModal(src: string, title: string): void {
-    this.imageModal = {
-      visible: true,
-      src,
-      title
-    };
-    
+    this.imageModal = { visible: true, src, title };
   }
 
   closeImageModal(): void {
     this.imageModal.visible = false;
-  }
-
-  get suggestionButtons(): string[] {
-    return this.languageService.getCurrentLanguage() === 'en' ? this.suggestionButtonsEn : this.suggestionButtonsPt;
-  }
-
-  private scrollToBottom(): void {
-    setTimeout(() => {
-      if (this.terminalOutput?.nativeElement) {
-        this.terminalOutput.nativeElement.scrollTop = this.terminalOutput.nativeElement.scrollHeight;
-      }
-    }, 0);
+    this.focusInput();
   }
 
   closeVisualResponse(): void {
     this.currentVisualResponse = null;
+    this.crtBox = [];
+    this.crtLinks = [];
     this.scrollToBottom();
+    this.focusInput();
+  }
+
+  get crtText(): string {
+    return this.crtBox.join('\n');
+  }
+
+  get suggestionButtons(): string[] {
+    return this.isEn ? this.suggestionButtonsEn : this.suggestionButtonsPt;
+  }
+
+  trackByIndex(index: number): number {
+    return index;
+  }
+
+  /**
+   * Rola até o fim depois que a tela for atualizada. Com eventCoalescing (app.config),
+   * o Angular só redesenha no próximo quadro de animação: um setTimeout(0) rolaria
+   * antes de o painel novo existir. Dois quadros garantem que ele já foi desenhado.
+   */
+  private scrollToBottom(): void {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const el = this.terminalOutput?.nativeElement;
+      if (el) el.scrollTop = el.scrollHeight;
+    }));
   }
 }

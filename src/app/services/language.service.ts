@@ -16,6 +16,13 @@ export class LanguageService {
     if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'pt')) {
       this.currentLanguageSubject.next(savedLanguage);
     }
+    // Mantém o <html lang> certo para leitores de tela e tradutores automáticos
+    this.currentLanguage$.subscribe(lang => {
+      document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+      document.title = lang === 'pt'
+        ? 'Rafael Miranda Ferreira · Portfólio'
+        : 'Rafael Miranda Ferreira · Portfolio';
+    });
   }
 
   getCurrentLanguage(): Language {
